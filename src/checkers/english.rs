@@ -27,12 +27,14 @@ impl Check for Checker<EnglishChecker> {
         // Normalize before checking
         let text = normalise_string(text);
 
+        // We want to identify text as English when it's NOT gibberish
+        // So we use !is_gibberish to get the correct logic
         let mut result = CheckResult {
             is_identified: !is_gibberish(&text, self.sensitivity),
             text: text.to_string(),
             checker_name: self.name,
             checker_description: self.description,
-            description: "Gibberish detection".to_string(),
+            description: "English text detected".to_string(),
             link: self.link,
         };
 
