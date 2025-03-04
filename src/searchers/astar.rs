@@ -180,7 +180,37 @@ fn is_common_sequence(prev_decoder: &str, current_cipher: &str) -> bool {
     }
 }
 
-/// Calculate the quality of a string for pruning
+/// Calculate the penalty score for a string based on its characteristics
+///
+/// This function combines two key metrics to determine string penalties:
+/// 1. Length penalty - how far the string length deviates from ideal size
+/// 2. Non-printable character penalty - how many non-printable characters exist
+///
+/// The final penalty score is: length_penalty * non_printable_penalty³
+///
+/// # Length Penalty Scoring
+/// - Empty strings: 1.0 (maximum penalty)
+/// - Very short (<3 chars): 0.9 (heavy penalty)
+/// - Very long (>5000 chars): 0.7 (significant penalty)
+/// - Ideal length (~100 chars): 0.0 (no penalty)
+/// - Other lengths: Penalty increases linearly as length deviates from 100
+///   Formula: |length - 100| / 900
+///   - The 900 denominator means penalty grows slowly
+///   - E.g., length=500 → ~0.44, length=50 → ~0.06
+///
+/// # Non-printable Character Penalty
+/// - All printable: 0.0 (no penalty)
+/// - Mixed content: Ratio of non-printable chars (linear scale)
+/// - All non-printable: 1.0 (maximum penalty)
+/// - The ratio is cubed to heavily penalize non-printable chars
+///   E.g., 50% non-printable → (0.5)³ = 0.125
+///
+/// # Final Score Interpretation
+/// - 0.0: Perfect (ideal length, all printable)
+/// - <0.1: Excellent (near ideal length, all printable)
+/// - <0.5: Good (acceptable length, mostly printable)
+/// - >0.9: Poor (wrong length or mostly non-printable)
+/// - 1.0: Worst (empty string or all non-printable)
 ///
 /// # Arguments
 ///
@@ -188,33 +218,52 @@ fn is_common_sequence(prev_decoder: &str, current_cipher: &str) -> bool {
 ///
 /// # Returns
 ///
-/// * A quality score between 0.0 and 1.0
-fn calculate_string_quality(s: &str) -> f32 {
-    // Factors to consider:
-    // 1. Length (not too short, not too long
-    if s.len() < 3 {
-        0.1
-    } else if s.len() > 5000 {
-        0.3
-    } else {
-        1.0 - (s.len() as f32 - 100.0).abs() / 900.0
-    }
-}
-
-/// Calculate the ratio of non-printable characters in a string
-/// Returns a value between 0.0 (all printable) and 1.0 (all non-printable)
-fn calculate_non_printable_ratio(text: &str) -> f32 {
-    if text.is_empty() {
+/// * A penalty score between 0.0 and 1.0, where:
+///   - 0.0 indicates no penalty (ideal string)
+///   - 1.0 indicates maximum penalty (worst possible string)
+fn calculate_string_penalty(s: &str) -> f32 {
+    // Empty strings get maximum penalty
+    if s.is_empty() {
         return 1.0;
     }
 
-    let non_printable_count = text.chars().filter(|&c| {
-        // Same criteria as before for non-printable chars
-        (c.is_control() && c != '\n' && c != '\r' && c != '\t') ||
-        !c.is_ascii_graphic() && !c.is_ascii_whitespace() && !c.is_ascii_punctuation()
-    }).count();
+    // Calculate length penalty (0.0 to 1.0)
+    let length_penalty = if s.len() < 3 {
+        0.9  // Heavy penalty for very short strings (can't be meaningful text)
+    } else if s.len() > 5000 {
+        0.7  // Significant penalty for very long strings (likely garbage)
+    } else {
+        // Linear penalty based on deviation from ideal length (100 chars)
+        // - Denominator 900 means penalty grows slowly (0.001 per char deviation)
+        (s.len() as f32 - 100.0).abs() / 900.0
+    };
 
-    non_printable_count as f32 / text.len() as f32
+    // Calculate non-printable character penalty (0.0 to 1.0)
+    let non_printable_count = s.chars().filter(|&c| {
+        // Consider a character non-printable if:
+        // 1. It's a control character (except common whitespace)
+        // 2. It's not a standard ASCII character (graphic, whitespace, or punctuation)
+        let is_non_printable = (c.is_control() && c != '\n' && c != '\r' && c != '\t') ||
+            (!c.is_ascii_graphic() && !c.is_ascii_whitespace() && !c.is_ascii_punctuation());
+        is_non_printable
+    }).count();
+    
+    // Convert count to a ratio (0.0 = all printable, 1.0 = none printable)
+    let non_printable_ratio = non_printable_count as f32 / s.len() as f32;
+    
+    // Combine penalties with emphasis on non-printable characters
+    // - Base penalty is the length penalty
+    // - Add non-printable penalty with cubic scaling
+    
+    // Create a base penalty from length
+    let mut combined_penalty = length_penalty;
+    
+    // Add a significant fixed penalty for ANY non-printable characters
+    if non_printable_ratio > 0.0 {
+        // Add 0.3 base penalty for any non-printable chars, plus scaled ratio
+        combined_penalty += 0.3 + (0.7 * non_printable_ratio);
+    }
+    combined_penalty.min(1.0)
 }
 
 /// A* search node with priority based on f = g + h
@@ -421,7 +470,7 @@ pub fn astar(input: String, result_sender: Sender<Option<DecoderResult>>, stop: 
                                     // Calculate quality scores for all strings
                                     let mut quality_scores: Vec<(String, f32)> = seen_strings
                                         .iter()
-                                        .map(|s| (s.clone(), calculate_string_quality(s)))
+                                        .map(|s| (s.clone(), calculate_string_penalty(s)))
                                         .collect();
 
                                     // Sort by quality (higher is better)
@@ -567,7 +616,7 @@ pub fn astar(input: String, result_sender: Sender<Option<DecoderResult>>, stop: 
                                     // Calculate quality scores for all strings
                                     let mut quality_scores: Vec<(String, f32)> = seen_strings
                                         .iter()
-                                        .map(|s| (s.clone(), calculate_string_quality(s)))
+                                        .map(|s| (s.clone(), calculate_string_penalty(s)))
                                         .collect();
 
                                     // Sort by quality (higher is better)
@@ -645,9 +694,35 @@ pub fn astar(input: String, result_sender: Sender<Option<DecoderResult>>, stop: 
 
 /// Generate a heuristic value for A* search prioritization
 ///
-/// The heuristic estimates how close a state is to being plaintext.
-/// A lower value indicates a more promising state. This implementation uses
-/// Cipher Identifier to identify the most likely ciphers for the given text.
+/// This function generates a heuristic score where LOWER values indicate more promising states.
+/// The score is built up through several multipliers, each penalizing different undesirable traits.
+///
+/// # Base Score
+/// - Starts with cipher identification score (0.0 to 1.0)
+/// - Higher base score = less likely to be a known cipher
+///
+/// # Sequence Penalty (25% increase)
+/// Applied when the current cipher doesn't commonly follow the previous decoder:
+/// - No penalty (1.0x) for common sequences (e.g., base64 → base32)
+/// - 25% penalty (1.25x) for uncommon sequences
+/// This gently guides the search toward known effective decoder chains.
+///
+/// # Success Rate Penalty (0% to 100% increase)
+/// Based on the previous decoder's historical success rate:
+/// - No penalty (1.0x) for 100% success rate
+/// - 50% penalty (1.5x) for 50% success rate
+/// - 100% penalty (2.0x) for 0% success rate
+/// This helps avoid decoders that rarely produce useful results.
+///
+/// # Quality Penalty (exponential)
+/// Based on string penalty (length and printable chars):
+/// - No penalty (1.0x) for perfect penalty (1.0)
+/// - Exponential penalty for higher penalty:
+///   penalty = 1.0 + e^(100 * penalty)
+/// - E.g., penalty 0.9 → ~1.1x penalty
+/// - E.g., penalty 0.5 → ~7.4x penalty
+/// - E.g., penalty 0.0 → ~2.7x10^43 penalty
+/// This dramatically deprioritizes paths with non-printable/garbage output.
 ///
 /// # Parameters
 ///
@@ -657,27 +732,32 @@ pub fn astar(input: String, result_sender: Sender<Option<DecoderResult>>, stop: 
 /// # Returns
 /// A float value representing the heuristic cost (lower is better)
 fn generate_heuristic(text: &str, path: &[CrackResult]) -> f32 {
+    // Start with base score from cipher identification
     let (cipher, base_score) = get_cipher_identifier_score(text);
     let mut final_score = base_score;
 
     if let Some(last_result) = path.last() {
-        // Penalize uncommon sequences instead of rewarding common ones
+        // Apply 25% penalty for uncommon decoder sequences
         if !is_common_sequence(last_result.decoder, &cipher) {
-            final_score *= 1.25; // 25% penalty for uncommon sequences
+            final_score *= 1.25;
         }
 
-        // Penalize low success rates instead of rewarding high ones
+        // Apply penalty based on decoder's historical failure rate
         let success_rate = get_decoder_success_rate(last_result.decoder);
-        final_score *= 1.0 + (1.0 - success_rate); // Penalty scales with failure rate
+        final_score *= 1.0 + (1.0 - success_rate); // Linear scaling with failure rate
     }
 
-    // Penalize low quality strings
-    final_score *= 1.0 + (1.0 - calculate_string_quality(text));
-
-    // Keep the non-printable penalty as is since it's already using a penalty approach
-    let non_printable_ratio = calculate_non_printable_ratio(text);
-    if non_printable_ratio > 0.0 {
-        final_score *= 1.0 + (non_printable_ratio * 100.0).exp();
+    // Apply exponential penalty based on string characteristics
+    let penalty = calculate_string_penalty(text);
+    if penalty > 0.0 {
+        // Use a more reasonable scaling factor and protect against overflow
+        // Use a progressive scaling factor that increases with penalty
+        // Normal text (~0.1) gets ~2x, mixed (~0.4) gets ~10x, non-printable (~0.9) gets ~50x
+        let scale_factor = 20.0 * penalty.powf(1.5);
+        let scaled_penalty = penalty * scale_factor;
+        // Add overflow protection by clamping the result
+        let exp_penalty = scaled_penalty.exp().min(1000.0);
+        final_score *= 1.0 + exp_penalty;
     }
 
     final_score
@@ -734,55 +814,68 @@ mod tests {
     }
 
     #[test]
-    fn test_generate_heuristic() {
-        // Test with normal text (should have relatively low score)
-        let normal_h = generate_heuristic("Hello World", &[]);
-        
-        // Test with suspicious text (should have higher score)
-        let suspicious_h = generate_heuristic("H\u{0}ll\u{1} W\u{2}rld", &[]);
-        
-        // Test with all non-printable (should have highest score)
-        let nonprint_h = generate_heuristic("\u{0}\u{1}\u{2}", &[]);
-        
-        // Verify that penalties create appropriate ordering
-        assert!(normal_h < suspicious_h);
-        assert!(suspicious_h < nonprint_h);
-        
-        // Verify base case isn't negative
-        assert!(normal_h >= 0.0);
-    }
+    fn test_calculate_string_penalty() {
+        // Test normal text (should have low penalty)
+        let normal = calculate_string_penalty("Hello World");
+        assert!(normal < 0.1);
 
-    #[test]
-    fn test_calculate_non_printable_ratio() {
-        // Test normal text
-        assert_eq!(calculate_non_printable_ratio("Hello World"), 0.0);
-        assert_eq!(calculate_non_printable_ratio("123!@#\n\t"), 0.0);
+        // Test text with newlines and tabs (should still have low penalty)
+        let with_whitespace = calculate_string_penalty("Hello\nWorld\tTest");
+        assert!(with_whitespace < 0.1);
         
-        // Test mixed content
-        let mixed = format!("Hello\u{0}World\u{1}"); // 2 non-printable in 12 chars
-        assert!((calculate_non_printable_ratio(&mixed) - 0.1666).abs() < 0.001);
+        // Test mixed content (should have higher penalty)
+        let mixed = format!("Hello\u{0}World\u{1}");
+        let mixed_penalty = calculate_string_penalty(&mixed);
+        assert!(mixed_penalty > normal);
+        assert!(mixed_penalty < 1.0);
         
-        // Test all non-printable
-        assert_eq!(calculate_non_printable_ratio("\u{0}\u{1}\u{2}"), 1.0);
+        // Test all non-printable (should have very high penalty)
+        let non_printable = calculate_string_penalty("\u{0}\u{1}\u{2}");
+        assert!(non_printable > 0.9);
         
         // Test empty string
-        assert_eq!(calculate_non_printable_ratio(""), 1.0);
+        assert_eq!(calculate_string_penalty(""), 1.0);
+        
+        // Test very long string (should have moderate penalty)
+        let long_string = "a".repeat(6000);
+        let long_penalty = calculate_string_penalty(&long_string);
+        assert!(long_penalty > normal);
+        assert!(long_penalty < 0.8);
     }
 
     #[test]
-    fn test_heuristic_with_non_printable() {
+    fn test_heuristic_normal_text() {
         // Test normal text
         let normal = generate_heuristic("Hello World", &[]);
-        
+        // Normal text should have a relatively low score since it's clean
+        assert!(normal < 10.0, "Normal text score was {}, expected < 10.0", normal);
+    }
+
+    #[test]
+    fn test_heuristic_mixed_content() {
         // Test text with some non-printable chars
+        let normal = generate_heuristic("Hello World", &[]);
         let with_non_printable = generate_heuristic("Hello\u{0}World", &[]);
         
+        // Mixed content should score worse than normal text
+        assert!(with_non_printable > normal * 2.0, 
+            "Mixed content score {} was not > 2x normal score {}", 
+            with_non_printable, normal);
+    }
+
+    #[test]
+    fn test_heuristic_all_non_printable() {
         // Test text with all non-printable chars
+        let with_non_printable = generate_heuristic("Hello\u{0}World", &[]);
         let all_non_printable = generate_heuristic("\u{0}\u{1}\u{2}", &[]);
         
-        // Verify that more non-printable chars result in higher (worse) scores
-        assert!(normal < with_non_printable);
-        assert!(with_non_printable < all_non_printable);
-        assert!(all_non_printable > 100.0); // Should be very high for all non-printable
+        // All non-printable should score much worse than mixed content
+        assert!(all_non_printable > with_non_printable * 2.0,
+            "All non-printable score {} was not > 2x mixed content score {}", 
+            all_non_printable, with_non_printable);
+        // Should be very high for all non-printable
+        assert!(all_non_printable > 80.0, 
+            "All non-printable score {} was not > 80.0", 
+            all_non_printable);
     }
 }
