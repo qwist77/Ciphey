@@ -243,9 +243,8 @@ fn calculate_string_penalty(s: &str) -> f32 {
         // Consider a character non-printable if:
         // 1. It's a control character (except common whitespace)
         // 2. It's not a standard ASCII character (graphic, whitespace, or punctuation)
-        let is_non_printable = (c.is_control() && c != '\n' && c != '\r' && c != '\t') ||
-            (!c.is_ascii_graphic() && !c.is_ascii_whitespace() && !c.is_ascii_punctuation());
-        is_non_printable
+        (c.is_control() && c != '\n' && c != '\r' && c != '\t') ||
+        !c.is_ascii_graphic() && !c.is_ascii_whitespace() && !c.is_ascii_punctuation()
     }).count();
     
     // Convert count to a ratio (0.0 = all printable, 1.0 = none printable)
@@ -254,15 +253,8 @@ fn calculate_string_penalty(s: &str) -> f32 {
     // Combine penalties with emphasis on non-printable characters
     // - Base penalty is the length penalty
     // - Add non-printable penalty with cubic scaling
-    
-    // Create a base penalty from length
-    let mut combined_penalty = length_penalty;
-    
-    // Add a significant fixed penalty for ANY non-printable characters
-    if non_printable_ratio > 0.0 {
-        // Add 0.3 base penalty for any non-printable chars, plus scaled ratio
-        combined_penalty += 0.3 + (0.7 * non_printable_ratio);
-    }
+    // - Ensure result stays in [0.0, 1.0] range
+    let combined_penalty = length_penalty + non_printable_ratio.powi(3);
     combined_penalty.min(1.0)
 }
 
@@ -751,14 +743,13 @@ fn generate_heuristic(text: &str, path: &[CrackResult]) -> f32 {
     let penalty = calculate_string_penalty(text);
     if penalty > 0.0 {
         // Use a more reasonable scaling factor and protect against overflow
-        // Use a progressive scaling factor that increases with penalty
-        // Normal text (~0.1) gets ~2x, mixed (~0.4) gets ~10x, non-printable (~0.9) gets ~50x
-        let scale_factor = 20.0 * penalty.powf(1.5);
-        let scaled_penalty = penalty * scale_factor;
+        // Scale penalty to be between 0 and 10 for exp
+        let scaled_penalty = penalty * 10.0;
         // Add overflow protection by clamping the result
-        let exp_penalty = scaled_penalty.exp().min(1000.0);
+        let exp_penalty = scaled_penalty.exp().min(100.0);
         final_score *= 1.0 + exp_penalty;
     }
+
     final_score
 }
 
