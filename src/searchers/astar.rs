@@ -759,7 +759,6 @@ fn generate_heuristic(text: &str, path: &[CrackResult]) -> f32 {
         let exp_penalty = scaled_penalty.exp().min(1000.0);
         final_score *= 1.0 + exp_penalty;
     }
-
     final_score
 }
 
