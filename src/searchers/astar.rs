@@ -404,7 +404,7 @@ pub fn astar(input: String, result_sender: Sender<Option<DecoderResult>>, stop: 
                         // Add penalty for uncommon sequences
                         if let Some(previous_decoder) = new_decoders_used.last() {
                             if !helper_functions::is_common_sequence(previous_decoder.decoder, decoder_name) {
-                                base_score += 0.25;
+                                base_score += 1.0;
                             }
                         }
                         
