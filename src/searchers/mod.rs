@@ -49,9 +49,9 @@ pub fn search_for_plaintext(input: String) -> Option<DecoderResult> {
     let (result_sender, result_recv) = bounded::<Option<DecoderResult>>(1);
     // For stopping the thread
     let stop = Arc::new(AtomicBool::new(false));
-    let s = stop.clone();
+    let _s = stop.clone();
     // Use A* search algorithm instead of BFS
-    let handle = thread::spawn(move || astar::astar(input, result_sender, s));
+    let handle = thread::spawn(move || astar::astar(input, result_sender));
 
     // In top_results mode, we don't need to return a result immediately
     // as the timer will display all results when it expires
