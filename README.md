@@ -20,6 +20,11 @@ ciphey is the next generation of decoding tools, built by the same people that b
 
 We fully intend to replace [Ciphey](https://github.com/ciphey/ciphey) with ciphey.
 
+> [!WARNING]
+> This branch intentionally omits the oversized workspace artifacts from `ares/codex/fix-ctf-writeup-search-flag`.
+> Do not try to import `target/**`, `tmp_*`, `ctf-room-inventory.local.*`, `vendor/tokenizers/**`, `.codex`, `_staging_anitools/**`, or any file larger than `1 MiB`.
+> Read [IMPORTANT_DO_NOT_IMPORT_LARGE_BRANCH_ARTIFACTS.md](IMPORTANT_DO_NOT_IMPORT_LARGE_BRANCH_ARTIFACTS.md) and [docs/ctf_writeup_corpus_tests.md](docs/ctf_writeup_corpus_tests.md) before attempting any further import.
+
 ✨ You can read more about ciphey here https://skerritt.blog/introducing-ciphey/ ✨
 
 # How to Use
@@ -148,5 +153,4 @@ We now store statistics in a database. This is useful for seeing how ciphey is d
 
 We use AI for 2 things:
 1. The TUI is entirely vibe coded.
-2. I made AI spend hours researching every single CTF challenge out there. It created a list of 15,071 CTFs. It then went through every single CTF and looked for writeups. In those writeups it looked for anything related to encoding / decoding. It then created tests out of those. This enabled us to increase our testing coverage and make sure all CTF encoding / decoding challenges are solveable with this tool.
-
+2. We use AI to turn public CTF challenge inventories into reproducible decoding tests. This branch ships the generator, a small public sample manifest, and the generated-test harness. A larger local inventory can live in `data/ctf_writeup_inventory.local.json` and should be ignored locally via `.git/info/exclude`.

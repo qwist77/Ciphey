@@ -23,3 +23,6 @@ doc/
 /.idea
 .aider*
 .cursor
+__pycache__/
+*.pyc
+tmp_ctf_writeup_tests_report.json

@@ -8,6 +8,13 @@ test-all:
   cargo clippy
   cargo test
 
+test-corpus:
+  cargo test --features ctf-corpus-tests --test ctf_writeups_generated -- --quiet
+
+refresh-corpus-tests:
+  ./scripts/generate_ctf_writeup_tests.py
+  cargo test --features ctf-corpus-tests --test ctf_writeups_generated -- --quiet
+
 fix-all:
   git add .
   git commit -m 'Clippy and fmt'

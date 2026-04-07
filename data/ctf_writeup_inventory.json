@@ -1,0 +1,73 @@
+{
+  "entries": [
+    {
+      "name": "ATT&CK",
+      "platform": "Blue Team Labs Online",
+      "url": "https://github.com/jaimealruiz/BTLO-writeups/blob/master/Challenges/ATT&CK.md",
+      "source": "https://api.github.com/repos/jaimealruiz/BTLO-writeups/contents/Challenges?ref=master",
+      "metadata": {
+        "btlo_type": "challenge",
+        "source_type": "writeup_index",
+        "source_repo_url": "https://github.com/jaimealruiz/BTLO-writeups/blob/master/Challenges/ATT&CK.md",
+        "official_platform_url": "https://blueteamlabs.online/home/challenges",
+        "official_index_status": "login-gated"
+      }
+    },
+    {
+      "name": "Bad Logic",
+      "platform": "Blue Team Labs Online",
+      "url": "https://github.com/Baniur/Writeups/blob/main/btlo.md",
+      "source": "https://github.com/Baniur/Writeups/blob/main/btlo.md",
+      "metadata": {
+        "btlo_type": "challenge",
+        "difficulty": "hard",
+        "discipline": "digital forensics",
+        "source_type": "writeup_index",
+        "source_repo_url": "https://github.com/Baniur/Writeups/blob/main/btlo.md",
+        "official_platform_url": "https://blueteamlabs.online/home/challenges",
+        "official_index_status": "login-gated"
+      }
+    },
+    {
+      "name": "Bot",
+      "platform": "Blue Team Labs Online",
+      "url": "https://medium.com/@krzysztof.kuzin/btlo-write-up-bot-85deba9e8af8",
+      "source": "https://github.com/Baniur/Writeups/blob/main/btlo.md",
+      "metadata": {
+        "btlo_type": "challenge",
+        "difficulty": "medium",
+        "discipline": "incident response",
+        "source_type": "writeup_index",
+        "source_repo_url": "https://github.com/Baniur/Writeups/blob/main/btlo.md",
+        "official_platform_url": "https://blueteamlabs.online/home/challenges",
+        "official_index_status": "login-gated"
+      }
+    },
+    {
+      "name": "Browser Forensic Cryptominer",
+      "platform": "Blue Team Labs Online",
+      "url": "https://github.com/nguyenhuudang04/blue-team-labs-online-writeups/tree/main/Easy/Browser%20Forensic%20Cryptominer",
+      "source": "https://api.github.com/repos/nguyenhuudang04/blue-team-labs-online-writeups/contents/Easy?ref=main",
+      "metadata": {
+        "difficulty": "Easy",
+        "source_type": "writeup_index",
+        "source_repo_url": "https://github.com/nguyenhuudang04/blue-team-labs-online-writeups/tree/main/Easy/Browser%20Forensic%20Cryptominer",
+        "official_platform_url": "https://blueteamlabs.online/home/challenges",
+        "official_index_status": "login-gated"
+      }
+    },
+    {
+      "name": "Bruteforce",
+      "platform": "Blue Team Labs Online",
+      "url": "https://blueteamlabs.online/home/challenge/bruteforce-16629bf9a2",
+      "source": "https://github.com/VincentHuynh2956/Vhuynh-BlueTeamLabs-Writeups/blob/main/BTLO-Bruteforce.md",
+      "metadata": {
+        "btlo_type": "challenge",
+        "source_type": "writeup_index",
+        "source_repo_url": "https://github.com/VincentHuynh2956/Vhuynh-BlueTeamLabs-Writeups/blob/main/BTLO-Bruteforce.md",
+        "official_platform_url": "https://blueteamlabs.online/home/challenge/bruteforce-16629bf9a2",
+        "official_index_status": "login-gated"
+      }
+    }
+  ]
+}
