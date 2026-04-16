@@ -34,10 +34,10 @@ pub fn add_plaintext_result(
     };
 
     trace!(
-        "Adding plaintext result: [{}] {} (decoder: {})",
+        "Adding plaintext result from checker '{}' via decoder '{}' ({} bytes)",
         checker_name,
-        text,
-        decoder_name
+        decoder_name,
+        text.len()
     );
 
     let mut results = match PLAINTEXT_RESULTS.lock() {

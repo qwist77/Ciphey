@@ -9,8 +9,9 @@ use rpassword;
 use std::collections::HashMap;
 use std::fmt::Display;
 use std::io::{self, Write};
-use std::path::Path;
 use termcolor::{Buffer, Color, ColorSpec, WriteColor};
+
+use crate::path_security::validate_wordlist_path;
 
 /// Represents a color scheme with RGB values for different message types and roles.
 /// Each color is stored as a comma-separated RGB string in the format "r,g,b"
@@ -624,6 +625,12 @@ fn get_wordlist_path() -> Option<String> {
         "\n{}",
         print_statement("Enter the path to your wordlist file:")
     );
+    println!(
+        "{}",
+        print_statement(
+            "For safety, ciphey only accepts files in your current directory, home directory, or a system wordlist directory."
+        )
+    );
     println!("{}", print_statement("(Leave empty to cancel)"));
 
     let mut input = String::new();
@@ -637,17 +644,10 @@ fn get_wordlist_path() -> Option<String> {
         return None;
     }
 
-    // Check if the file exists
-    if !Path::new(input).exists() {
-        println!("{}", print_warning("File does not exist!"));
-        return get_wordlist_path(); // Recursively prompt until valid or cancelled
-    }
-
-    // Check if the file is readable
-    match std::fs::File::open(input) {
-        Ok(_) => Some(input.to_string()),
-        Err(e) => {
-            println!("{}", print_warning(format!("Cannot read file: {}", e)));
+    match validate_wordlist_path(input) {
+        Ok(path) => Some(path.display().to_string()),
+        Err(error) => {
+            println!("{}", print_warning(error));
             get_wordlist_path() // Recursively prompt until valid or cancelled
         }
     }

@@ -39,6 +39,8 @@ pub mod decoders;
 /// The filtration system builds what decoders to use at runtime
 /// By default it will use them all.
 mod filtration_system;
+/// Path validation helpers for user-provided filesystem access.
+mod path_security;
 /// The searcher is the thing which searches for the plaintext
 /// It is the core of the program.
 mod searchers;
