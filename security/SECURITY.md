@@ -64,6 +64,8 @@ Current repository behavior that matters for security review:
 
 - `ciphey` stores cache and human-review data in a local SQLite database at `~/.ciphey/database.sqlite`.
 - Configuration is stored locally at `~/.ciphey/config.toml`.
+- Interactive plaintext exports only accept a filename and write the output beneath the current user's home directory.
+- First-run custom wordlist setup only accepts readable files from the current working directory, the user's home directory, or standard system wordlist directories.
 - The first-run enhanced-detection flow prompts for a Hugging Face token and states that the token is used for model download and not stored on disk.
 
 If you report an issue, avoid sending real secrets or private datasets unless they are necessary to reproduce the problem.

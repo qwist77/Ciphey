@@ -8,6 +8,9 @@ on: [push, pull_request]
 
 name: Test
 
+permissions:
+  contents: read
+
 jobs:
   check:
     name: Check

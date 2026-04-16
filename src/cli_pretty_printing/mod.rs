@@ -28,10 +28,10 @@
 
 #[cfg(test)]
 mod tests;
+use crate::path_security::{resolve_output_path, DEFAULT_EXPORT_FILENAME};
 use crate::storage;
 use crate::storage::wait_athena_storage::PlaintextResult;
 use crate::DecoderResult;
-use std::env;
 use std::fs::write;
 use std::io::Write;
 use termcolor::{Buffer, Color, ColorSpec, WriteColor};
@@ -327,20 +327,31 @@ pub fn program_exiting_successful_decoding(result: DecoderResult) {
         let reply: String = read!("{}\n");
         let result = reply.to_ascii_lowercase().starts_with('y');
         if result {
+            let default_file_path = resolve_output_path(DEFAULT_EXPORT_FILENAME)
+                .expect("Expected default export path to resolve");
             println!(
-                "Please enter a filename: (default: {}/ciphey_text.txt)",
-                apply_color_with_rgb(&env::var("HOME").unwrap_or_default(), 255, 255, 255)
+                "Please enter a filename: (default: {})",
+                apply_color_with_rgb(&default_file_path.display().to_string(), 255, 255, 255)
             );
-            let mut file_path: String = read!("{}\n");
-            if file_path.is_empty() {
-                file_path = format!("{}/ciphey_text.txt", env::var("HOME").unwrap_or_default());
-            }
+            let file_path_input: String = read!("{}\n");
+            let file_path = match resolve_output_path(&file_path_input) {
+                Ok(path) => path,
+                Err(error) => {
+                    println!("{}", warning(&error.to_string()));
+                    println!(
+                        "The plaintext is:\n{}\n{}",
+                        success(&plaintext[0]),
+                        decoded_path_string
+                    );
+                    return;
+                }
+            };
             println!(
                 "Outputting plaintext to file: {}\n\n{}",
-                statement(&file_path, None),
+                statement(&file_path.display().to_string(), None),
                 decoded_path_string
             );
-            write(file_path, &plaintext[0]).expect("Error writing to file.");
+            write(&file_path, &plaintext[0]).expect("Error writing to file.");
             return;
         }
     }
@@ -531,23 +542,45 @@ pub fn display_top_results(results: &[PlaintextResult]) {
         let result = input.trim().to_ascii_lowercase().starts_with('y');
 
         if result {
+            let default_file_path =
+                resolve_output_path(DEFAULT_EXPORT_FILENAME).expect("Expected default export path");
             println!(
                 "{}",
                 question(&format!(
-                    "Please enter a filename: (default: {}/ciphey_text.txt)",
-                    statement(&env::var("HOME").unwrap_or_default(), None)
+                    "Please enter a filename: (default: {})",
+                    statement(&default_file_path.display().to_string(), None)
                 ))
             );
 
-            let mut file_path = String::new();
+            let mut file_path_input = String::new();
             std::io::stdin()
-                .read_line(&mut file_path)
+                .read_line(&mut file_path_input)
                 .expect("Failed to read input");
-            file_path = file_path.trim().to_string();
+            let file_path = match resolve_output_path(&file_path_input) {
+                Ok(path) => path,
+                Err(error) => {
+                    println!("{}", warning(&error.to_string()));
+                    // Fall back to console output when the export path is invalid.
+                    for (i, result) in results.iter().enumerate() {
+                        println!(
+                            "{}",
+                            success(&format!("Result #{}: {}", i + 1, result.text))
+                        );
+                        println!("{}", success(&format!("Decoder: {}", result.decoder_name)));
+                        println!("{}", success(&format!("Checker: {}", result.checker_name)));
+                        println!(
+                            "{}",
+                            success(&format!("Description: {}", result.description))
+                        );
+                        if results.len() > 1 {
+                            println!("{}", success("---"));
+                        }
+                    }
 
-            if file_path.is_empty() {
-                file_path = format!("{}/ciphey_text.txt", env::var("HOME").unwrap_or_default());
-            }
+                    println!("{}", success("=== End of Top Results ===\n"));
+                    return;
+                }
+            };
 
             let mut file_content = String::new();
             for (i, result) in results.iter().enumerate() {
@@ -561,7 +594,10 @@ pub fn display_top_results(results: &[PlaintextResult]) {
             }
 
             match write(&file_path, file_content) {
-                Ok(_) => println!("{}", success(&format!("Results written to {}", file_path))),
+                Ok(_) => println!(
+                    "{}",
+                    success(&format!("Results written to {}", file_path.display()))
+                ),
                 Err(e) => println!("{}", warning(&format!("Failed to write to file: {}", e))),
             }
 
