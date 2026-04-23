@@ -1,152 +1,198 @@
- 
- <p align="center">
- <br><br>
-➡️
-<a href="http://discord.skerritt.blog">Discord</a> | 
-<a href="https://broadleaf-angora-7db.notion.site/Ciphey2-32d5eea5d38b40c5b95a9442b4425710">Documentation </a>
- ⬅️
-</p>
+# ciphey
 
 <p align="center">
-<h1>Project ciphey</h1>
+  <img src="images/ciphey-logo.png" alt="Legacy Ciphey logo">
 </p>
 
-<p align="center">
-  <img src="https://raw.githubusercontent.com/bee-san/ciphey/main/images/main_demo.svg" alt="ciphey demo">
-</p>
+`ciphey` is an automated decoding and cracking tool written in Rust. Give it
+encoded text and it searches through decoder chains until a checker identifies
+likely plaintext.
 
+This repository is library-first. The CLI is intentionally thin: it parses
+arguments and config, then calls `ciphey::perform_cracking()` to run storage,
+plaintext checking, and the search pipeline.
 
-ciphey is the next generation of decoding tools, built by the same people that brought you [Ciphey](https://github.com/ciphey/ciphey).
+## Install
 
-We fully intend to replace [Ciphey](https://github.com/ciphey/ciphey) with ciphey.
+From crates.io:
 
-✨ You can read more about ciphey here https://skerritt.blog/introducing-ciphey/ ✨
+```sh
+cargo install ciphey
+```
 
-# How to Use
+From a local checkout:
 
-The simplest way to use ciphey is to join the [Discord Server](http://discord.skerritt.blog), head to the #bots channel and use ciphey with `$ciphey`. Type `$help` for helpful information!
+```sh
+git clone https://github.com/bee-san/ciphey
+cd ciphey
+cargo install --path .
+```
 
-The second best way is to use `cargo install ciphey` and call it with `ciphey`.
+For development, you can run the binary directly:
 
-You can also `git clone` this repo and run `docker build .` it to get an image.
+```sh
+cargo run -- --text "SGVsbG8sIFdvcmxkIQ=="
+```
 
-# Features
+Docker is also supported:
 
-Some features that may interest you, and that we're proud of.
+```sh
+docker build -t ciphey .
+docker run --rm ciphey --text "SGVsbG8sIFdvcmxkIQ=="
+```
 
-## Fast
+## CLI Usage
 
-![](https://raw.githubusercontent.com/bee-san/ciphey/main/images/better_demo.svg)
+The current CLI expects input through `--text` or `--file`; positional input is
+not accepted.
 
-ciphey is fast. Very fast. Other decoders such as Ciphey require advance artifical intelligence to determine which path it should take to decode (whether to try Caesar next or Base64 etc).
+```sh
+ciphey --text "SGVsbG8sIFdvcmxkIQ=="
+ciphey --file encoded.txt
+ciphey --text "..." --cracking-timeout 10
+ciphey --text "..." --regex 'flag\{.*\}'
+ciphey --text "..." --wordlist words.txt
+ciphey --text "..." --top-results
+ciphey --text "..." --disable-human-checker
+ciphey --help
+```
 
-ciphey is so fast we don't need to worry about this currently. For every 1 decode Ciphey can do, ciphey can do ~7. That's a 700% increase in speed.
+| Flag | Purpose |
+| --- | --- |
+| `-t`, `--text <TEXT>` | Decode text from the command line. |
+| `-f`, `--file <FILE>` | Read encoded text from a file instead of `--text`. |
+| `-c`, `--cracking-timeout <SECONDS>` | Stop searching after a timeout. The default is 5 seconds. |
+| `-r`, `--regex <REGEX>` | Treat a regex or crib as the plaintext success condition. |
+| `--wordlist <WORDLIST>` | Load newline-separated words for exact-match plaintext detection. |
+| `--top-results` | Collect potential plaintexts until timeout instead of stopping at the first match. This disables the human checker. |
+| `-d`, `--disable-human-checker` | Disable interactive confirmation prompts. Useful for scripts and APIs. |
+| `-a`, `--api-mode <true\|false>` | Run in API mode. |
+| `-v`, `--verbose...` | Increase logging verbosity. Repeat for more detail. |
+| `--enable-enhanced-detection` | Enable the optional BERT-based plaintext detector. |
 
-## Library First
+On first CLI run, ciphey creates `~/.ciphey/config.toml` and may ask a few setup
+questions. CLI flags override values loaded from the config file.
 
-There are 2 main parts to ciphey, the library and the CLI. The CLI simply uses the library which means you can build on-top of ciphey. Some features we've built are:
-* [A Discord Bot](https://github.com/bee-san/discord-bot)
-* Better testing of the whole program 💖
-* This CLI
+## Library Usage
 
-## Decoders
+Add ciphey to your project:
 
-ciphey currently supports 16 decoders and it is growing [fast](https://github.com/bee-san/ciphey/issues/61). Ciphey supports around ~50, and we are adding more everyday.
+```toml
+[dependencies]
+ciphey = "0.12"
+```
 
-## Timer
+Call the library entry point:
 
-One of the big issues with Ciphey is that it could run forever. If it couldn't decode your text, you'd never know!
+```rust
+use ciphey::config::Config;
+use ciphey::perform_cracking;
 
-ciphey has a timer (built into the library and the CLI) which means it will eventually expire. The CLI defaults to 5 seconds, the Discord Bot defaults to 10 (to account for network messages being sent across).
+fn main() {
+    let mut config = Config::default();
+    config.timeout = 5;
+    config.human_checker_on = false;
 
-## Better Docs, Better Tests
+    match perform_cracking("SGVsbG8sIFdvcmxkIQ==", config) {
+        Some(result) => {
+            println!("{}", result.text.last().expect("decoded text"));
 
-ciphey already has ~120 tests, documentation tests (to ensure our docs are kept up to date) and we enforce documentation on all of our major components. This is beautiful.
+            let path = result
+                .path
+                .iter()
+                .map(|step| step.decoder)
+                .collect::<Vec<_>>()
+                .join(" -> ");
+            println!("path: {path}");
+        }
+        None => eprintln!("failed to decode input"),
+    }
+}
+```
 
-## LemmeKnow
+## What ciphey Tries
 
-![](https://raw.githubusercontent.com/bee-san/ciphey/main/images/lemmeknow.svg)
+The search pipeline currently includes these decoder families:
 
-<img width="861" alt="Screenshot 2022-12-18 at 17 08 36" src="https://user-images.githubusercontent.com/10378052/208310491-86e704ca-963d-4850-a2b2-f14b6e0f4797.png">
+- Base encodings: Base32, Base58 Bitcoin, Base58 Flickr, Base58 Monero,
+  Base58 Ripple, Base64, Base91, Base65536, Z85.
+- Text and byte transforms: A1Z26, binary, Braille, hexadecimal, Morse code,
+  reverse text, URL encoding.
+- Classical ciphers: Atbash, Caesar, Railfence, ROT47, simple substitution,
+  Vigenere.
+- Other formats: Brainfuck and Citrix Ctx1.
 
-[LemmeKnow](https://github.com/swanandx/lemmeknow) is the Rust version of [PyWhat](https://github.com/bee-san/pyWhat). It's 33 times faster which means we can now decode and determine whether something is an IP address or whatnot 3300% faster than in Python.
+Plaintext detection is handled by checkers for English/gibberish, regex cribs,
+wordlists, known token patterns through LemmeKnow, common passwords, optional
+human confirmation, and optional enhanced detection through `gibberish-or-not`.
 
-## Multithreading
+## Local State
 
-Ciphey did not support multi-threading, it was quite slow. ciphey supports it natively using [Rayon](https://github.com/rayon-rs/rayon), one of the fastest multi-threading libraries out there.
+ciphey stores user-local state under `~/.ciphey`:
 
-While we do not entirely see the effects of it with only 16 decoders (and them being quite fast), as we add more decoders (and slower ones) we'll see it won't affect the overall programs speed as much.
+- `~/.ciphey/config.toml` stores CLI defaults and preferences.
+- `~/.ciphey/database.sqlite` stores the SQLite cache and related persistence.
+- `~/.ciphey/models/` stores optional enhanced-detection model files.
 
-## Multi level decodings
+Tests that touch the database should use `TestDatabase` and `set_test_db_path()`
+from `src/lib.rs` instead of the default user database.
 
-Ciphey did not support multi-level decryptions like a path of Rot13 -> Base64 -> Rot13 because it was so slow. ciphey is fast enough to support this, although we plan to turn it off eventually.
+## Development
 
-## Configurable Sensitivity for Plaintext Detection
+Use the same commands as CI and the repo tooling:
 
-ciphey now supports configurable sensitivity levels for gibberish detection, allowing for more accurate plaintext identification across different types of encodings. Classical ciphers like Caesar use Low sensitivity to better handle English-like results, while most other decoders use Medium sensitivity by default.
+```sh
+cargo check
+cargo test
+cargo nextest run
+cargo clippy
+cargo fmt --all
+docker build .
+```
 
-This feature helps reduce false positives and negatives in plaintext detection, making ciphey more reliable across a wider range of encoded texts.
+The `justfile` provides shortcuts:
 
-## Enhanced Plaintext Detection with BERT
+```sh
+just test
+just test-all
+just build-all
+```
 
-ciphey now offers enhanced plaintext detection using a BERT-based model from the `gibberish-or-not` crate. This feature:
-- Increases plaintext detection accuracy by approximately 40%
-- Reduces false positives and negatives when identifying plaintext
-- Can be enabled during first-run setup or later with `ciphey --enable-enhanced-detection`
-- Requires a one-time download of a 500MB AI model (requires a free Hugging Face account)
+Prefer the smallest relevant validation first, then broader checks before
+shipping changes.
 
-# New Features
-## Better search algorithm
-We now use A* search. This is very fast.
+## Project Map
 
-A* works by using a heuristic to estimate the cost of reaching the goal from the current state.
+- `src/main.rs`: CLI binary entry point.
+- `src/cli/`: CLI parsing, config merging, and first-run setup.
+- `src/lib.rs`: public library entry point and orchestration.
+- `src/decoders/`: decoder implementations and decoder registry.
+- `src/searchers/`: search strategies.
+- `src/checkers/`: plaintext detection and validation.
+- `src/storage/`: SQLite-backed cache and persistence.
+- `tests/`: integration and corpus tests.
+- `docs/`: design notes and longer-form documentation.
 
-First, we ignore the heuristic for very fast decoders like Base64 and ensure we run them first each time on each node.
+Useful docs:
 
-Then, we calculate the heuristic for the remaining decoders using `cipher_identifier` which can determine the probability a given string is a certain cipher.
+- [Architecture](docs/ares_architecture.md)
+- [Overview](docs/ares_overview.md)
+- [Plaintext identification](docs/plaintext_identification.md)
+- [Storage](docs/storage.md)
+- [Threat model](docs/threat_model.md)
+- [Package manager notes](docs/package-managers.md)
 
-We store previous results in a cache to avoid recalculating the same path.
+## Adding Decoders
 
-We prune the search tree to avoid unnecessary calculations and keep the memory usage down if it gets too bad.
+When adding a decoder, make it discoverable everywhere the pipeline expects it:
 
-We also keep track of statistics on decoders to dynamically prioritise decoders that work better (example: caesar is popular, but Beaufort is not so Caesar will dynamically be prioritised over Beaufort)
+1. Add the implementation in `src/decoders/`.
+2. Export and register it in `src/decoders/mod.rs`.
+3. Add it to `src/filtration_system/mod.rs` so search can run it.
+4. Add focused tests near the decoder or in `tests/`.
 
-Finally, we keep track of popular pairs. So base64 -> base64 is very popular, so we prioritise that path (among others).
+The decoder interface lives in `src/decoders/interface.rs`.
 
-## Custom themes
+## License
 
-You can now set a custom theme for ciphey. This is useful if you want to make ciphey look different.
-
-This also helps with accessibility.
-
-## Vigenere
-
-We now use perhaps the best algorithm for Vigenere.
-
-It's fast, accurate and handles non-letter characters better than any other algorithm.
-
-## Better English checking
-
-We use a qudgaram / trigram / english dict checker to calculate probability of plaintext. 
-
-We change the thresholds depending on the cipher. Example is that Caesar returns text that "looks" like english, whereas base64 does not.
-
-As well as this, we have a database of popular regex (about 500) of api keys, mac addresses, etc.
-
-We also have a `is_password` function to determine if a string is an exact password seen in a data dump.
-
-## More ciphers
-* Braille
-* Atbash
-* Vigenere
-
-## Database
-
-We now store statistics in a database. This is useful for seeing how ciphey is doing over time.
-
-# AI Use
-
-We use AI for 2 things:
-1. The TUI is entirely vibe coded.
-2. I made AI spend hours researching every single CTF challenge out there. It created a list of 15,071 CTFs. It then went through every single CTF and looked for writeups. In those writeups it looked for anything related to encoding / decoding. It then created tests out of those. This enabled us to increase our testing coverage and make sure all CTF encoding / decoding challenges are solveable with this tool.
-
+ciphey is licensed under the MIT license.
