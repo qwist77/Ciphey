@@ -33,12 +33,38 @@ jobs:
         with:
           command: check
 
-  test:
-    name: Test Suite
+  test-core:
+    name: Core Test Suite
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v2
+
+      - name: Install stable toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+
+      - name: Run core cargo test target selection
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: --lib --bins --test integration_test --test ctf_writeups
+
+      - name: Run doc tests
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: --doc
+
+  test-ctf-corpus:
+    name: Generated CTF Corpus
     runs-on: ubuntu-latest
     steps:
       - name: Checkout sources
@@ -51,10 +77,11 @@ jobs:
           toolchain: stable
           override: true
 
-      - name: Run cargo test
+      - name: Run generated CTF corpus target
         uses: actions-rs/cargo@v1
         with:
           command: test
+          args: --test ctf_corpus_generated
 
   lints:
     name: Lints

@@ -6,7 +6,15 @@ test-all:
   cargo build
   cargo check
   cargo clippy
-  cargo test
+  just test-core
+  just test-corpus
+
+test-core:
+  cargo test --lib --bins --test integration_test --test ctf_writeups
+  cargo test --doc
+
+test-corpus:
+  cargo test --test ctf_corpus_generated
 
 fix-all:
   git add .

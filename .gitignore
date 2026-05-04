@@ -23,3 +23,9 @@ doc/
 /.idea
 .aider*
 .cursor
+.codex
+__pycache__/
+/_staging_anitools/
+/ctf-room-inventory.generated.md
+/ctf-room-inventory.local.*
+/tmp_*

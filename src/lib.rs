@@ -323,8 +323,8 @@ impl DecoderResult {
 /// Gets the test directory path
 #[doc(hidden)]
 pub fn get_test_dir_path() -> std::path::PathBuf {
-    let mut path = dirs::home_dir().expect("Could not find home directory");
-    path.push(".ciphey");
+    let mut path = std::env::temp_dir();
+    path.push("ciphey");
     path.push("test");
     path
 }
