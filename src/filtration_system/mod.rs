@@ -5,8 +5,11 @@ use std::sync::mpsc::channel;
 
 use crate::checkers::CheckerTypes;
 use crate::cli_pretty_printing;
+use crate::decoders::affine_decoder::AffineDecoder;
 use crate::decoders::ascii85_decoder::Ascii85Decoder;
+use crate::decoders::ascii_shift_decoder::AsciiShiftDecoder;
 use crate::decoders::atbash_decoder::AtbashDecoder;
+use crate::decoders::baconian_decoder::BaconianDecoder;
 use crate::decoders::base32_decoder::Base32Decoder;
 use crate::decoders::base58_bitcoin_decoder::Base58BitcoinDecoder;
 use crate::decoders::base58_monero_decoder::Base58MoneroDecoder;
@@ -42,12 +45,14 @@ use crate::decoders::octal_decoder::OctalDecoder;
 use crate::decoders::railfence_decoder::RailfenceDecoder;
 use crate::decoders::reverse_decoder::ReverseDecoder;
 use crate::decoders::rot47_decoder::ROT47Decoder;
+use crate::decoders::soundex_decoder::SoundexDecoder;
 use crate::decoders::substitution_generic_decoder::SubstitutionGenericDecoder;
 use crate::decoders::tap_code_decoder::TapCodeDecoder;
 use crate::decoders::url_decoder::URLDecoder;
 use crate::decoders::utf8_decoder::Utf8Decoder;
 use crate::decoders::uuencode_decoder::UuencodeDecoder;
 use crate::decoders::vigenere_decoder::VigenereDecoder;
+use crate::decoders::xandy_decoder::XandyDecoder;
 use crate::decoders::z85_decoder::Z85Decoder;
 
 use crate::decoders::brainfuck_interpreter::BrainfuckInterpreter;
@@ -257,6 +262,8 @@ pub fn filter_and_get_decoders(_text_struct: &DecoderResult) -> Decoders {
     let base91 = Decoder::<Base91Decoder>::new();
     let base65536 = Decoder::<Base65536Decoder>::new();
     let citrix_ctx1 = Decoder::<CitrixCTX1Decoder>::new();
+    let affine = Decoder::<AffineDecoder>::new();
+    let ascii_shift = Decoder::<AsciiShiftDecoder>::new();
     let decimal = Decoder::<DecimalDecoder>::new();
     let baudot = Decoder::<BaudotDecoder>::new();
     let dna = Decoder::<DnaDecoder>::new();
@@ -274,10 +281,12 @@ pub fn filter_and_get_decoders(_text_struct: &DecoderResult) -> Decoders {
     let morsecodedecoder = Decoder::<MorseCodeDecoder>::new();
     let multi_tap = Decoder::<MultiTapDecoder>::new();
     let octal = Decoder::<OctalDecoder>::new();
+    let baconian = Decoder::<BaconianDecoder>::new();
     let atbashdecoder = Decoder::<AtbashDecoder>::new();
     let caesardecoder = Decoder::<CaesarDecoder>::new();
     let railfencedecoder = Decoder::<RailfenceDecoder>::new();
     let rot47decoder = Decoder::<ROT47Decoder>::new();
+    let soundex = Decoder::<SoundexDecoder>::new();
     let z85 = Decoder::<Z85Decoder>::new();
     let tap_code = Decoder::<TapCodeDecoder>::new();
     let utf8 = Decoder::<Utf8Decoder>::new();
@@ -285,6 +294,7 @@ pub fn filter_and_get_decoders(_text_struct: &DecoderResult) -> Decoders {
     let a1z26decoder = Decoder::<A1Z26Decoder>::new();
     let brailledecoder = Decoder::<BrailleDecoder>::new();
     let substitution_generic = Decoder::<SubstitutionGenericDecoder>::new();
+    let xandy = Decoder::<XandyDecoder>::new();
 
     let brainfuck = Decoder::<BrainfuckInterpreter>::new();
 
@@ -299,6 +309,8 @@ pub fn filter_and_get_decoders(_text_struct: &DecoderResult) -> Decoders {
             Box::new(base58_flickr),
             Box::new(base91),
             Box::new(base65536),
+            Box::new(affine),
+            Box::new(ascii_shift),
             Box::new(base62),
             Box::new(base69),
             Box::new(base85),
@@ -319,16 +331,19 @@ pub fn filter_and_get_decoders(_text_struct: &DecoderResult) -> Decoders {
             Box::new(tap_code),
             Box::new(utf8),
             Box::new(uuencode),
+            Box::new(baconian),
             Box::new(atbashdecoder),
             Box::new(caesardecoder),
             Box::new(railfencedecoder),
             Box::new(citrix_ctx1),
             Box::new(url),
             Box::new(rot47decoder),
+            Box::new(soundex),
             Box::new(z85),
             Box::new(a1z26decoder),
             Box::new(brailledecoder),
             Box::new(substitution_generic),
+            Box::new(xandy),
             Box::new(brainfuck),
         ],
     }
@@ -531,10 +546,13 @@ mod tests {
     fn migrated_python_decoders_are_registered() {
         let migrated_decoder_names = [
             "ascii85",
+            "affine",
+            "ascii_shift",
             "Base62",
             "Base69",
             "Base85",
             "baudot",
+            "baconian",
             "decimal",
             "dna",
             "dtmf",
@@ -543,9 +561,11 @@ mod tests {
             "leetspeak",
             "multi_tap",
             "octal",
+            "soundex",
             "tap_code",
             "utf8",
             "uuencode",
+            "xandy",
         ];
 
         let filtered_decoders = filter_and_get_decoders(&DecoderResult::default());

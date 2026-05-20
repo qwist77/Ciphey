@@ -7,10 +7,16 @@
 
 /// The a1z26_decoder module decodes A1Z26
 pub mod a1z26_decoder;
+/// The affine_decoder module cracks Affine cipher text
+pub mod affine_decoder;
 /// The ascii85_decoder module decodes ASCII85
 pub mod ascii85_decoder;
+/// The ascii_shift_decoder module cracks full-ASCII shift cipher text
+pub mod ascii_shift_decoder;
 /// The atbash_decoder module decodes atbash
 pub mod atbash_decoder;
+/// The baconian_decoder module cracks Baconian cipher text
+pub mod baconian_decoder;
 /// The base32_decoder module decodes base32
 pub mod base32_decoder;
 /// The base58_bitcoin_decoder module decodes base58 bitcoin
@@ -56,6 +62,8 @@ pub mod decimal_decoder;
 pub mod dna_decoder;
 /// The dtmf_decoder module decodes DTMF frequency pairs
 pub mod dtmf_decoder;
+/// The english_scoring module scores brute-force plaintext candidates
+pub mod english_scoring;
 /// The galactic_decoder module decodes Standard Galactic Alphabet
 pub mod galactic_decoder;
 /// The gzip_decoder module decodes gzip-compressed bytes
@@ -89,6 +97,8 @@ pub mod caesar_decoder;
 pub mod railfence_decoder;
 /// For the rot47 decoder
 pub mod rot47_decoder;
+/// The soundex_decoder module cracks Soundex code sequences
+pub mod soundex_decoder;
 
 /// The tap_code_decoder module decodes tap code coordinates
 pub mod tap_code_decoder;
@@ -110,9 +120,14 @@ pub mod brainfuck_interpreter;
 
 /// The vigenere_decoder module decodes Vigenère cipher text
 pub mod vigenere_decoder;
+/// The xandy_decoder module cracks X-and-Y binary substitution text
+pub mod xandy_decoder;
 
+use affine_decoder::AffineDecoder;
 use ascii85_decoder::Ascii85Decoder;
+use ascii_shift_decoder::AsciiShiftDecoder;
 use atbash_decoder::AtbashDecoder;
+use baconian_decoder::BaconianDecoder;
 use base32_decoder::Base32Decoder;
 use base58_bitcoin_decoder::Base58BitcoinDecoder;
 use base58_flickr_decoder::Base58FlickrDecoder;
@@ -145,12 +160,14 @@ use octal_decoder::OctalDecoder;
 use railfence_decoder::RailfenceDecoder;
 use reverse_decoder::ReverseDecoder;
 use rot47_decoder::ROT47Decoder;
+use soundex_decoder::SoundexDecoder;
 use substitution_generic_decoder::SubstitutionGenericDecoder;
 use tap_code_decoder::TapCodeDecoder;
 use url_decoder::URLDecoder;
 use utf8_decoder::Utf8Decoder;
 use uuencode_decoder::UuencodeDecoder;
 use vigenere_decoder::VigenereDecoder;
+use xandy_decoder::XandyDecoder;
 use z85_decoder::Z85Decoder;
 
 use brainfuck_interpreter::BrainfuckInterpreter;
@@ -165,10 +182,16 @@ pub enum DecoderType {
     DefaultDecoder(interface::DefaultDecoder),
     /// a1z26 decoder
     A1z26Decoder(a1z26_decoder::A1Z26Decoder),
+    /// affine decoder
+    AffineDecoder(affine_decoder::AffineDecoder),
+    /// ASCII shift decoder
+    AsciiShiftDecoder(ascii_shift_decoder::AsciiShiftDecoder),
     /// atbash decoder
     AtbashDecoder(atbash_decoder::AtbashDecoder),
     /// ascii85 decoder
     Ascii85Decoder(ascii85_decoder::Ascii85Decoder),
+    /// baconian decoder
+    BaconianDecoder(baconian_decoder::BaconianDecoder),
     /// baudot decoder
     BaudotDecoder(baudot_decoder::BaudotDecoder),
     /// base32 decoder
@@ -227,6 +250,8 @@ pub enum DecoderType {
     RailfenceDecoder(railfence_decoder::RailfenceDecoder),
     /// rot47 decoder
     Rot47Decoder(rot47_decoder::ROT47Decoder),
+    /// soundex decoder
+    SoundexDecoder(soundex_decoder::SoundexDecoder),
     /// z85 decoder
     Z85Decoder(z85_decoder::Z85Decoder),
     /// tap code decoder
@@ -243,6 +268,8 @@ pub enum DecoderType {
     BrainfuckInterpreter(brainfuck_interpreter::BrainfuckInterpreter),
     /// vigenere decoder
     VigenereDecoder(vigenere_decoder::VigenereDecoder),
+    /// X-and-Y decoder
+    XandyDecoder(xandy_decoder::XandyDecoder),
 }
 
 /// Wrapper struct to hold Decoders for DECODER_MAP
@@ -276,6 +303,11 @@ pub static DECODER_MAP: Lazy<HashMap<&str, DecoderBox>> = Lazy::new(|| {
         (
             "Vigenere",
             DecoderBox::new(Decoder::<VigenereDecoder>::new()),
+        ),
+        ("affine", DecoderBox::new(Decoder::<AffineDecoder>::new())),
+        (
+            "ascii_shift",
+            DecoderBox::new(Decoder::<AsciiShiftDecoder>::new()),
         ),
         ("Binary", DecoderBox::new(Decoder::<BinaryDecoder>::new())),
         (
@@ -337,6 +369,10 @@ pub static DECODER_MAP: Lazy<HashMap<&str, DecoderBox>> = Lazy::new(|| {
             DecoderBox::new(Decoder::<MultiTapDecoder>::new()),
         ),
         ("octal", DecoderBox::new(Decoder::<OctalDecoder>::new())),
+        (
+            "baconian",
+            DecoderBox::new(Decoder::<BaconianDecoder>::new()),
+        ),
         ("atbash", DecoderBox::new(Decoder::<AtbashDecoder>::new())),
         ("caesar", DecoderBox::new(Decoder::<CaesarDecoder>::new())),
         (
@@ -344,6 +380,7 @@ pub static DECODER_MAP: Lazy<HashMap<&str, DecoderBox>> = Lazy::new(|| {
             DecoderBox::new(Decoder::<RailfenceDecoder>::new()),
         ),
         ("rot47", DecoderBox::new(Decoder::<ROT47Decoder>::new())),
+        ("soundex", DecoderBox::new(Decoder::<SoundexDecoder>::new())),
         ("Z85", DecoderBox::new(Decoder::<Z85Decoder>::new())),
         (
             "tap_code",
@@ -364,5 +401,6 @@ pub static DECODER_MAP: Lazy<HashMap<&str, DecoderBox>> = Lazy::new(|| {
             "Brainfuck",
             DecoderBox::new(Decoder::<BrainfuckInterpreter>::new()),
         ),
+        ("xandy", DecoderBox::new(Decoder::<XandyDecoder>::new())),
     ])
 });
