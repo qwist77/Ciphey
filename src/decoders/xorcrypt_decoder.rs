@@ -1,6 +1,7 @@
 //! Crack repeating-key XOR text with native Rust scoring.
 
 use crate::checkers::CheckerTypes;
+use crate::decoders::binary_signatures::{binary_signature_score, KNOWN_BINARY_SIGNATURES};
 use crate::decoders::byte_input::parse_textual_bytes;
 use crate::decoders::english_scoring::score_english;
 use crate::decoders::interface::check_string_success;
@@ -13,16 +14,6 @@ use log::{info, trace};
 const MAX_KEY_SIZE: usize = 16;
 const KEY_BYTE_BEAM: usize = 3;
 const MAX_KEYS_PER_SIZE: usize = 32;
-const BINARY_SIGNATURES: [&[u8]; 8] = [
-    b"\x1f\x8b\x08",
-    b"PK\x03\x04",
-    b"\x89PNG\r\n\x1a\n",
-    b"%PDF-",
-    b"\x7fELF",
-    b"\xff\xd8\xff",
-    b"BZh",
-    b"\xfd7zXZ\x00",
-];
 
 /// Repeating-key XOR cracker.
 pub struct XorCryptDecoder;
@@ -147,7 +138,7 @@ fn xorcrypt_candidates(bytes: &[u8]) -> Vec<(String, String, f32)> {
 
 fn binary_signature_keys(bytes: &[u8], key_size: usize) -> Vec<Vec<u8>> {
     let mut keys = Vec::new();
-    for signature in BINARY_SIGNATURES {
+    for signature in KNOWN_BINARY_SIGNATURES {
         if key_size > signature.len() || key_size > bytes.len() {
             continue;
         }
@@ -224,9 +215,10 @@ fn xor_repeating(bytes: &[u8], key: &[u8]) -> Vec<u8> {
 }
 
 fn bytes_to_candidate_text(decoded: Vec<u8>) -> (String, f32) {
+    let signature_score = binary_signature_score(&decoded);
     match String::from_utf8(decoded) {
         Ok(text) => {
-            let score = score_english(&text);
+            let score = signature_score.unwrap_or_else(|| score_english(&text));
             (text, score)
         }
         Err(error) => {
@@ -235,7 +227,7 @@ fn bytes_to_candidate_text(decoded: Vec<u8>) -> (String, f32) {
                 .iter()
                 .map(|byte| format!("{byte:02x}"))
                 .collect::<String>();
-            (text, -1000.0)
+            (text, signature_score.unwrap_or(-1000.0))
         }
     }
 }
@@ -288,6 +280,10 @@ mod tests {
     #[test]
     fn crack_preserves_non_utf8_output_as_hex_carrier() {
         let encrypted = xor_repeating(&[0x1f, 0x8b, 0x08, 0xff], b"ice");
+        let candidates = xorcrypt_candidates(&encrypted);
+        assert!(candidates
+            .iter()
+            .any(|(candidate, key, _)| candidate == "1f8b08ff" && key == "0x696365"));
         let encoded = encrypted
             .iter()
             .map(|byte| format!("{byte:02x}"))
@@ -295,7 +291,7 @@ mod tests {
         let decoder = Decoder::<XorCryptDecoder>::new();
         let result = decoder.crack(&encoded, &get_athena_checker());
         let texts = result.unencrypted_text.unwrap();
-        assert!(texts.iter().any(|candidate| candidate == "1f8b08ff"));
+        assert_eq!(texts[0], "1f8b08ff");
     }
 
     #[test]

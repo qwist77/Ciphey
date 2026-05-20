@@ -1,6 +1,7 @@
 //! Crack single-byte XOR text.
 
 use crate::checkers::CheckerTypes;
+use crate::decoders::binary_signatures::binary_signature_score;
 use crate::decoders::byte_input::parse_textual_bytes;
 use crate::decoders::english_scoring::score_english;
 use crate::decoders::interface::check_string_success;
@@ -93,9 +94,10 @@ fn xor_single_candidates(bytes: &[u8]) -> Vec<(String, String, f32)> {
 }
 
 fn bytes_to_candidate_text(decoded: Vec<u8>) -> (String, f32) {
+    let signature_score = binary_signature_score(&decoded);
     match String::from_utf8(decoded) {
         Ok(text) => {
-            let score = score_english(&text);
+            let score = signature_score.unwrap_or_else(|| score_english(&text));
             (text, score)
         }
         Err(error) => {
@@ -104,7 +106,7 @@ fn bytes_to_candidate_text(decoded: Vec<u8>) -> (String, f32) {
                 .iter()
                 .map(|byte| format!("{byte:02x}"))
                 .collect::<String>();
-            (text, -1000.0)
+            (text, signature_score.unwrap_or(-1000.0))
         }
     }
 }
@@ -150,14 +152,14 @@ mod tests {
 
     #[test]
     fn crack_preserves_non_utf8_output_as_hex_carrier() {
-        let encrypted = [0x1f, 0x8b]
+        let encrypted = [0x1f, 0x8b, 0x08]
             .iter()
             .map(|byte| format!("{:02x}", byte ^ 0x42))
             .collect::<String>();
         let decoder = Decoder::<XorSingleDecoder>::new();
         let result = decoder.crack(&encrypted, &get_athena_checker());
         let texts = result.unencrypted_text.unwrap();
-        assert!(texts.iter().any(|candidate| candidate == "1f8b"));
+        assert_eq!(texts[0], "1f8b08");
     }
 
     #[test]
