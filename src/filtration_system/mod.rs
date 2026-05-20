@@ -28,12 +28,16 @@ use crate::decoders::braille_decoder::BrailleDecoder;
 use crate::decoders::caesar_decoder::CaesarDecoder;
 use crate::decoders::citrix_ctx1_decoder::CitrixCTX1Decoder;
 use crate::decoders::crack_results::CrackResult;
+use crate::decoders::decimal_decoder::DecimalDecoder;
 use crate::decoders::interface::{Crack, Decoder};
 use crate::decoders::morse_code::MorseCodeDecoder;
+use crate::decoders::multi_tap_decoder::MultiTapDecoder;
+use crate::decoders::octal_decoder::OctalDecoder;
 use crate::decoders::railfence_decoder::RailfenceDecoder;
 use crate::decoders::reverse_decoder::ReverseDecoder;
 use crate::decoders::rot47_decoder::ROT47Decoder;
 use crate::decoders::substitution_generic_decoder::SubstitutionGenericDecoder;
+use crate::decoders::tap_code_decoder::TapCodeDecoder;
 use crate::decoders::url_decoder::URLDecoder;
 use crate::decoders::vigenere_decoder::VigenereDecoder;
 use crate::decoders::z85_decoder::Z85Decoder;
@@ -245,6 +249,7 @@ pub fn filter_and_get_decoders(_text_struct: &DecoderResult) -> Decoders {
     let base91 = Decoder::<Base91Decoder>::new();
     let base65536 = Decoder::<Base65536Decoder>::new();
     let citrix_ctx1 = Decoder::<CitrixCTX1Decoder>::new();
+    let decimal = Decoder::<DecimalDecoder>::new();
     let url = Decoder::<URLDecoder>::new();
     let ascii85 = Decoder::<Ascii85Decoder>::new();
     let base62 = Decoder::<Base62Decoder>::new();
@@ -253,11 +258,14 @@ pub fn filter_and_get_decoders(_text_struct: &DecoderResult) -> Decoders {
     let base32 = Decoder::<Base32Decoder>::new();
     let reversedecoder = Decoder::<ReverseDecoder>::new();
     let morsecodedecoder = Decoder::<MorseCodeDecoder>::new();
+    let multi_tap = Decoder::<MultiTapDecoder>::new();
+    let octal = Decoder::<OctalDecoder>::new();
     let atbashdecoder = Decoder::<AtbashDecoder>::new();
     let caesardecoder = Decoder::<CaesarDecoder>::new();
     let railfencedecoder = Decoder::<RailfenceDecoder>::new();
     let rot47decoder = Decoder::<ROT47Decoder>::new();
     let z85 = Decoder::<Z85Decoder>::new();
+    let tap_code = Decoder::<TapCodeDecoder>::new();
     let a1z26decoder = Decoder::<A1Z26Decoder>::new();
     let brailledecoder = Decoder::<BrailleDecoder>::new();
     let substitution_generic = Decoder::<SubstitutionGenericDecoder>::new();
@@ -281,8 +289,12 @@ pub fn filter_and_get_decoders(_text_struct: &DecoderResult) -> Decoders {
             Box::new(ascii85),
             Box::new(binary),
             Box::new(hexadecimal),
+            Box::new(decimal),
+            Box::new(octal),
             Box::new(base32),
             Box::new(morsecodedecoder),
+            Box::new(multi_tap),
+            Box::new(tap_code),
             Box::new(atbashdecoder),
             Box::new(caesardecoder),
             Box::new(railfencedecoder),

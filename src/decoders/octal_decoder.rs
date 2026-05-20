@@ -1,0 +1,118 @@
+//! Decode octal byte values into text.
+
+use crate::checkers::CheckerTypes;
+use crate::decoders::interface::check_string_success;
+
+use super::crack_results::CrackResult;
+use super::interface::{Crack, Decoder};
+
+use log::{debug, info, trace};
+
+/// Octal decoder.
+pub struct OctalDecoder;
+
+impl Crack for Decoder<OctalDecoder> {
+    fn new() -> Decoder<OctalDecoder> {
+        Decoder {
+            name: "octal",
+            description: "Octal byte encoding represents text as base-8 character code values.",
+            link: "https://en.wikipedia.org/wiki/Octal",
+            tags: vec!["octal", "ascii", "decoder"],
+            popularity: 0.025,
+            phantom: std::marker::PhantomData,
+        }
+    }
+
+    fn crack(&self, text: &str, checker: &CheckerTypes) -> CrackResult {
+        trace!("Trying octal with text {:?}", text);
+        let mut results = CrackResult::new(self, text.to_string());
+        let Some(decoded_text) = decode_octal(text) else {
+            debug!("Octal decode failed");
+            return results;
+        };
+
+        if !check_string_success(&decoded_text, text) {
+            info!(
+                "Failed to decode octal because check_string_success returned false on string {}",
+                decoded_text
+            );
+            return results;
+        }
+
+        let checker_result = checker.check(&decoded_text);
+        results.unencrypted_text = Some(vec![decoded_text]);
+        results.update_checker(&checker_result);
+        results
+    }
+
+    fn get_tags(&self) -> &Vec<&str> {
+        &self.tags
+    }
+
+    fn get_name(&self) -> &str {
+        self.name
+    }
+
+    fn get_popularity(&self) -> f32 {
+        self.popularity
+    }
+
+    fn get_description(&self) -> &str {
+        self.description
+    }
+
+    fn get_link(&self) -> &str {
+        self.link
+    }
+}
+
+fn decode_octal(text: &str) -> Option<String> {
+    let tokens: Vec<&str> = if text.contains(' ') {
+        text.split(' ').collect()
+    } else {
+        if text.len() % 3 != 0 {
+            return None;
+        }
+        text.as_bytes()
+            .chunks(3)
+            .map(std::str::from_utf8)
+            .collect::<Result<Vec<_>, _>>()
+            .ok()?
+    };
+
+    let mut bytes = Vec::with_capacity(tokens.len());
+    for token in tokens {
+        if token.is_empty() || token.len() > 3 {
+            return None;
+        }
+        let value = u16::from_str_radix(token, 8).ok()?;
+        if value > 255 {
+            return None;
+        }
+        bytes.push(value as u8);
+    }
+    String::from_utf8(bytes).ok()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn decodes_concatenated_triplets() {
+        assert_eq!(decode_octal("110145154154157"), Some("Hello".to_string()));
+    }
+
+    #[test]
+    fn decodes_space_separated_values() {
+        assert_eq!(
+            decode_octal("110 145 154 154 157"),
+            Some("Hello".to_string())
+        );
+    }
+
+    #[test]
+    fn rejects_values_outside_byte_range() {
+        assert_eq!(decode_octal("777"), None);
+    }
+}

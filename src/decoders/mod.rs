@@ -46,6 +46,8 @@ pub mod citrix_ctx1_decoder;
 /// The crack_results module defines the CrackResult
 /// Each and every decoder return same CrackResult
 pub mod crack_results;
+/// The decimal_decoder module decodes decimal byte values
+pub mod decimal_decoder;
 /// The url_decoder module decodes url
 pub mod url_decoder;
 
@@ -61,6 +63,10 @@ pub mod reverse_decoder;
 /// The morse_code module decodes morse code
 /// It is public as we use it in some tests.
 pub mod morse_code;
+/// The multi_tap_decoder module decodes multi-tap phone keypad codes
+pub mod multi_tap_decoder;
+/// The octal_decoder module decodes octal byte values
+pub mod octal_decoder;
 
 /// For the caesar cipher decoder
 pub mod caesar_decoder;
@@ -70,6 +76,8 @@ pub mod railfence_decoder;
 /// For the rot47 decoder
 pub mod rot47_decoder;
 
+/// The tap_code_decoder module decodes tap code coordinates
+pub mod tap_code_decoder;
 /// For the z85 cipher decoder
 pub mod z85_decoder;
 
@@ -106,11 +114,15 @@ use base91_decoder::Base91Decoder;
 use braille_decoder::BrailleDecoder;
 use caesar_decoder::CaesarDecoder;
 use citrix_ctx1_decoder::CitrixCTX1Decoder;
+use decimal_decoder::DecimalDecoder;
 use morse_code::MorseCodeDecoder;
+use multi_tap_decoder::MultiTapDecoder;
+use octal_decoder::OctalDecoder;
 use railfence_decoder::RailfenceDecoder;
 use reverse_decoder::ReverseDecoder;
 use rot47_decoder::ROT47Decoder;
 use substitution_generic_decoder::SubstitutionGenericDecoder;
+use tap_code_decoder::TapCodeDecoder;
 use url_decoder::URLDecoder;
 use vigenere_decoder::VigenereDecoder;
 use z85_decoder::Z85Decoder;
@@ -159,12 +171,18 @@ pub enum DecoderType {
     Base91Decoder(base91_decoder::Base91Decoder),
     /// citrix ctx1 decoder
     CitrixCtx1Decoder(citrix_ctx1_decoder::CitrixCTX1Decoder),
+    /// decimal decoder
+    DecimalDecoder(decimal_decoder::DecimalDecoder),
     /// url decoder
     UrlDecoder(url_decoder::URLDecoder),
     /// reverse decoder
     ReverseDecoder(reverse_decoder::ReverseDecoder),
     /// morse decoder
     MorseCode(morse_code::MorseCodeDecoder),
+    /// multi-tap decoder
+    MultiTapDecoder(multi_tap_decoder::MultiTapDecoder),
+    /// octal decoder
+    OctalDecoder(octal_decoder::OctalDecoder),
     /// caesar decoder
     CaesarDecoder(caesar_decoder::CaesarDecoder),
     /// railfence decoder
@@ -173,6 +191,8 @@ pub enum DecoderType {
     Rot47Decoder(rot47_decoder::ROT47Decoder),
     /// z85 decoder
     Z85Decoder(z85_decoder::Z85Decoder),
+    /// tap code decoder
+    TapCodeDecoder(tap_code_decoder::TapCodeDecoder),
     /// braille decoder
     BrailleDecoder(braille_decoder::BrailleDecoder),
     /// substitution decoder
@@ -246,6 +266,7 @@ pub static DECODER_MAP: Lazy<HashMap<&str, DecoderBox>> = Lazy::new(|| {
             "Citrix Ctx1",
             DecoderBox::new(Decoder::<CitrixCTX1Decoder>::new()),
         ),
+        ("decimal", DecoderBox::new(Decoder::<DecimalDecoder>::new())),
         ("URL", DecoderBox::new(Decoder::<URLDecoder>::new())),
         ("ascii85", DecoderBox::new(Decoder::<Ascii85Decoder>::new())),
         ("Base62", DecoderBox::new(Decoder::<Base62Decoder>::new())),
@@ -257,6 +278,11 @@ pub static DECODER_MAP: Lazy<HashMap<&str, DecoderBox>> = Lazy::new(|| {
             "Morse Code",
             DecoderBox::new(Decoder::<MorseCodeDecoder>::new()),
         ),
+        (
+            "multi_tap",
+            DecoderBox::new(Decoder::<MultiTapDecoder>::new()),
+        ),
+        ("octal", DecoderBox::new(Decoder::<OctalDecoder>::new())),
         ("atbash", DecoderBox::new(Decoder::<AtbashDecoder>::new())),
         ("caesar", DecoderBox::new(Decoder::<CaesarDecoder>::new())),
         (
@@ -265,6 +291,10 @@ pub static DECODER_MAP: Lazy<HashMap<&str, DecoderBox>> = Lazy::new(|| {
         ),
         ("rot47", DecoderBox::new(Decoder::<ROT47Decoder>::new())),
         ("Z85", DecoderBox::new(Decoder::<Z85Decoder>::new())),
+        (
+            "tap_code",
+            DecoderBox::new(Decoder::<TapCodeDecoder>::new()),
+        ),
         ("a1z26", DecoderBox::new(Decoder::<A1Z26Decoder>::new())),
         ("Braille", DecoderBox::new(Decoder::<BrailleDecoder>::new())),
         (
