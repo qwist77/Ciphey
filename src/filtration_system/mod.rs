@@ -45,7 +45,6 @@ use crate::decoders::octal_decoder::OctalDecoder;
 use crate::decoders::railfence_decoder::RailfenceDecoder;
 use crate::decoders::reverse_decoder::ReverseDecoder;
 use crate::decoders::rot47_decoder::ROT47Decoder;
-use crate::decoders::soundex_decoder::SoundexDecoder;
 use crate::decoders::substitution_generic_decoder::SubstitutionGenericDecoder;
 use crate::decoders::tap_code_decoder::TapCodeDecoder;
 use crate::decoders::url_decoder::URLDecoder;
@@ -288,7 +287,6 @@ pub fn filter_and_get_decoders(_text_struct: &DecoderResult) -> Decoders {
     let caesardecoder = Decoder::<CaesarDecoder>::new();
     let railfencedecoder = Decoder::<RailfenceDecoder>::new();
     let rot47decoder = Decoder::<ROT47Decoder>::new();
-    let soundex = Decoder::<SoundexDecoder>::new();
     let z85 = Decoder::<Z85Decoder>::new();
     let tap_code = Decoder::<TapCodeDecoder>::new();
     let utf8 = Decoder::<Utf8Decoder>::new();
@@ -342,7 +340,6 @@ pub fn filter_and_get_decoders(_text_struct: &DecoderResult) -> Decoders {
             Box::new(citrix_ctx1),
             Box::new(url),
             Box::new(rot47decoder),
-            Box::new(soundex),
             Box::new(z85),
             Box::new(a1z26decoder),
             Box::new(brailledecoder),
@@ -567,7 +564,6 @@ mod tests {
             "leetspeak",
             "multi_tap",
             "octal",
-            "soundex",
             "tap_code",
             "utf8",
             "uuencode",

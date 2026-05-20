@@ -99,9 +99,6 @@ pub mod caesar_decoder;
 pub mod railfence_decoder;
 /// For the rot47 decoder
 pub mod rot47_decoder;
-/// The soundex_decoder module cracks Soundex code sequences
-pub mod soundex_decoder;
-
 /// The tap_code_decoder module decodes tap code coordinates
 pub mod tap_code_decoder;
 /// The utf8_decoder module decodes UTF-8 bytes
@@ -166,7 +163,6 @@ use octal_decoder::OctalDecoder;
 use railfence_decoder::RailfenceDecoder;
 use reverse_decoder::ReverseDecoder;
 use rot47_decoder::ROT47Decoder;
-use soundex_decoder::SoundexDecoder;
 use substitution_generic_decoder::SubstitutionGenericDecoder;
 use tap_code_decoder::TapCodeDecoder;
 use url_decoder::URLDecoder;
@@ -258,8 +254,6 @@ pub enum DecoderType {
     RailfenceDecoder(railfence_decoder::RailfenceDecoder),
     /// rot47 decoder
     Rot47Decoder(rot47_decoder::ROT47Decoder),
-    /// soundex decoder
-    SoundexDecoder(soundex_decoder::SoundexDecoder),
     /// z85 decoder
     Z85Decoder(z85_decoder::Z85Decoder),
     /// tap code decoder
@@ -392,7 +386,6 @@ pub static DECODER_MAP: Lazy<HashMap<&str, DecoderBox>> = Lazy::new(|| {
             DecoderBox::new(Decoder::<RailfenceDecoder>::new()),
         ),
         ("rot47", DecoderBox::new(Decoder::<ROT47Decoder>::new())),
-        ("soundex", DecoderBox::new(Decoder::<SoundexDecoder>::new())),
         ("Z85", DecoderBox::new(Decoder::<Z85Decoder>::new())),
         (
             "tap_code",
