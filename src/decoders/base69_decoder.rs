@@ -70,7 +70,7 @@ impl Crack for Decoder<Base69Decoder> {
 
 fn decode_base69(text: &str) -> Option<String> {
     let cleaned: String = text.chars().filter(|ch| !ch.is_whitespace()).collect();
-    if cleaned.is_empty() {
+    if cleaned.is_empty() || !cleaned.is_ascii() {
         return None;
     }
 
@@ -154,5 +154,10 @@ mod tests {
     #[test]
     fn rejects_unknown_character() {
         assert_eq!(decode_base69("not_base69"), None);
+    }
+
+    #[test]
+    fn rejects_non_ascii_without_panicking() {
+        assert_eq!(decode_base69("😀😀😀😀😀😀😀😀"), None);
     }
 }

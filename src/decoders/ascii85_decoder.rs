@@ -71,10 +71,7 @@ impl Crack for Decoder<Ascii85Decoder> {
 }
 
 fn decode_ascii85(text: &str) -> Option<String> {
-    let mut cleaned: String = text.chars().filter(|ch| !ch.is_whitespace()).collect();
-    if cleaned.starts_with("<~") && cleaned.ends_with("~>") {
-        cleaned = cleaned[2..cleaned.len() - 2].to_string();
-    }
+    let cleaned: String = text.chars().filter(|ch| !ch.is_whitespace()).collect();
     decode_base85_bytes(&cleaned, ASCII85_ALPHABET, true)
         .and_then(|bytes| String::from_utf8(bytes).ok())
 }
@@ -97,10 +94,7 @@ mod tests {
     }
 
     #[test]
-    fn accepts_adobe_markers() {
-        assert_eq!(
-            decode_ascii85("<~BOu!rD]j7BEbo7~>"),
-            Some("hello world".to_string())
-        );
+    fn rejects_adobe_markers_like_python_default() {
+        assert_eq!(decode_ascii85("<~BOu!rD]j7BEbo7~>"), None);
     }
 }
