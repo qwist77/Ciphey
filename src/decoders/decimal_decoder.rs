@@ -106,7 +106,7 @@ mod tests {
 
     #[test]
     fn decodes_decimal_values_with_tabs_and_carriage_returns() {
-        assert_eq!(decode_decimal("72\t101\r108"), Some("Hel".to_string()));
+        assert_eq!(decode_decimal("72\t101\r120"), Some("Hex".to_string()));
     }
 
     #[test]
