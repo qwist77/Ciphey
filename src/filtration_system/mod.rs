@@ -358,6 +358,7 @@ mod tests {
             checker_type::{Check, Checker},
             CheckerTypes,
         },
+        decoders::DECODER_MAP,
         DecoderResult,
     };
 
@@ -524,5 +525,47 @@ mod tests {
             decoders.components.is_empty(),
             "Should return empty decoders for nonexistent name"
         );
+    }
+
+    #[test]
+    fn migrated_python_decoders_are_registered() {
+        let migrated_decoder_names = [
+            "ascii85",
+            "Base62",
+            "Base69",
+            "Base85",
+            "baudot",
+            "decimal",
+            "dna",
+            "dtmf",
+            "galactic",
+            "gzip",
+            "leetspeak",
+            "multi_tap",
+            "octal",
+            "tap_code",
+            "utf8",
+            "uuencode",
+        ];
+
+        let filtered_decoders = filter_and_get_decoders(&DecoderResult::default());
+        for decoder_name in migrated_decoder_names {
+            assert!(
+                DECODER_MAP.contains_key(decoder_name),
+                "{decoder_name} should be present in DECODER_MAP"
+            );
+            assert_eq!(
+                get_decoder_by_name(decoder_name).components.len(),
+                1,
+                "{decoder_name} should be returned by get_decoder_by_name"
+            );
+            assert!(
+                filtered_decoders
+                    .components
+                    .iter()
+                    .any(|decoder| decoder.get_name() == decoder_name),
+                "{decoder_name} should be present in the filtered decoder list"
+            );
+        }
     }
 }

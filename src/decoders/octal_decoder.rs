@@ -67,6 +67,11 @@ impl Crack for Decoder<OctalDecoder> {
 }
 
 fn decode_octal(text: &str) -> Option<String> {
+    // Python returns bytes; the Rust search pipeline can only carry valid UTF-8 strings.
+    String::from_utf8(decode_octal_bytes(text)?).ok()
+}
+
+fn decode_octal_bytes(text: &str) -> Option<Vec<u8>> {
     let tokens: Vec<&str> = if text.contains(' ') {
         text.split(' ').collect()
     } else {
@@ -91,7 +96,7 @@ fn decode_octal(text: &str) -> Option<String> {
         }
         bytes.push(value as u8);
     }
-    String::from_utf8(bytes).ok()
+    Some(bytes)
 }
 
 #[cfg(test)]
@@ -114,5 +119,11 @@ mod tests {
     #[test]
     fn rejects_values_outside_byte_range() {
         assert_eq!(decode_octal("777"), None);
+    }
+
+    #[test]
+    fn keeps_python_byte_parity_for_high_bit_values() {
+        assert_eq!(decode_octal_bytes("200"), Some(vec![0x80]));
+        assert_eq!(decode_octal("200"), None);
     }
 }

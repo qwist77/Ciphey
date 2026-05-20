@@ -77,9 +77,6 @@ fn decode_multi_tap(text: &str) -> Option<String> {
             result.push(decode_num_to_char(token)?);
         }
     }
-    if result.is_empty() {
-        return None;
-    }
     Some(result)
 }
 
@@ -120,5 +117,10 @@ mod tests {
     #[test]
     fn rejects_mixed_digit_token() {
         assert_eq!(decode_multi_tap("23"), None);
+    }
+
+    #[test]
+    fn empty_input_matches_python_helper() {
+        assert_eq!(decode_multi_tap(""), Some(String::new()));
     }
 }
