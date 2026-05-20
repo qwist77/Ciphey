@@ -78,8 +78,7 @@ fn decode_galactic(text: &str) -> Option<String> {
 
     let modified = text
         .replace("||", "|")
-        .replace('/', "")
-        .replace('\u{00a1}', "")
+        .replace(['/', '\u{00a1}'], "")
         .replace(" \u{0323} ", "")
         .replace('\u{0307}', "x");
 

@@ -98,15 +98,15 @@ fn decode_base69_chunk(chunk: &str) -> Option<Vec<u16>> {
 
     let mut decoded = [0u16; 8];
     let padded_bytes = chunk.ends_with('=');
-    for index in 0..8 {
+    for (index, value) in decoded.iter_mut().enumerate() {
         let start = index * 2;
         if start >= chunk.len() {
             break;
         }
         if index == 7 && padded_bytes {
-            decoded[index] = 0;
+            *value = 0;
         } else {
-            decoded[index] = chars_to_base69_byte(&chunk[start..start + 2])?;
+            *value = chars_to_base69_byte(&chunk[start..start + 2])?;
         }
     }
 

@@ -11,9 +11,10 @@ use ciphey::decoders::{
     hexadecimal_decoder::HexadecimalDecoder,
     interface::{Crack, Decoder},
 };
-use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
+use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
 use env_logger::Builder;
 use log::LevelFilter;
+use std::hint::black_box;
 use std::time::Duration;
 
 // Test cases for different decoders
@@ -76,9 +77,11 @@ pub fn benchmark_decoders(c: &mut Criterion) {
     builder.init();
 
     // Setup global config to suppress output
-    let mut config = Config::default();
-    config.api_mode = true;
-    config.verbose = 0;
+    let config = Config {
+        api_mode: true,
+        verbose: 0,
+        ..Default::default()
+    };
     set_global_config(config);
 
     // Create a benchmark group with appropriate measurement time
@@ -133,6 +136,7 @@ fn benchmark_decoder<T>(
     let decoder = Decoder::<T>::new();
 
     for test in test_cases {
+        debug_assert!(!test.expected.is_empty());
         let id = BenchmarkId::new(
             format!("{}_{}", decoder_name, test.description),
             test.encoded.len(),

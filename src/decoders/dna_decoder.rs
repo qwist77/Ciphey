@@ -72,7 +72,7 @@ fn decode_dna(text: &str) -> Option<String> {
         .chars()
         .filter(|ch| !matches!(ch, ',' | ';' | ':' | '-') && !ch.is_whitespace())
         .collect();
-    if cleaned.is_empty() || cleaned.len() % 3 != 0 {
+    if cleaned.is_empty() || !cleaned.len().is_multiple_of(3) {
         return None;
     }
 

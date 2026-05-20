@@ -5,6 +5,8 @@
 //! mod.rs file
 //! you will also need to make it a public module in this file.
 
+#![allow(clippy::missing_docs_in_private_items)]
+
 /// The a1z26_decoder module decodes A1Z26
 pub mod a1z26_decoder;
 /// The affine_decoder module cracks Affine cipher text

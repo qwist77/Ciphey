@@ -131,7 +131,7 @@ fn decode_baconian(text: &str) -> Option<Vec<String>> {
         .map(|ch| ch.to_ascii_uppercase())
         .collect();
     if cleaned.is_empty()
-        || cleaned.len() % 5 != 0
+        || !cleaned.len().is_multiple_of(5)
         || !cleaned.chars().all(|ch| matches!(ch, 'A' | 'B'))
     {
         return None;

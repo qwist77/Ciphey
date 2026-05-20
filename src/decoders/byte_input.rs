@@ -32,7 +32,7 @@ pub fn parse_hex_escape_bytes(text: &str) -> Option<Vec<u8>> {
 pub fn parse_hex_bytes(text: &str) -> Option<Vec<u8>> {
     let cleaned: String = text.chars().filter(|ch| !ch.is_whitespace()).collect();
     if cleaned.is_empty()
-        || cleaned.len() % 2 != 0
+        || !cleaned.len().is_multiple_of(2)
         || !cleaned.chars().all(|ch| ch.is_ascii_hexdigit())
     {
         return None;
@@ -60,7 +60,7 @@ pub fn parse_base64_bytes(text: &str) -> Option<Vec<u8>> {
         return None;
     }
     if padding != 0 {
-        padded.extend(std::iter::repeat('=').take(4 - padding));
+        padded.extend(std::iter::repeat_n('=', 4 - padding));
     }
 
     [

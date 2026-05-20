@@ -79,7 +79,7 @@ fn decode_base62(text: &str) -> Option<String> {
     while encoded.starts_with('0') && encoded.len() >= 2 {
         let count_char = encoded.chars().nth(1)?;
         let count = base62_value(count_char)? as usize;
-        leading_nulls.extend(std::iter::repeat(0).take(count));
+        leading_nulls.extend(std::iter::repeat_n(0, count));
         encoded = &encoded[count_char.len_utf8() + 1..];
     }
 

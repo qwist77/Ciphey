@@ -75,7 +75,7 @@ fn decode_octal_bytes(text: &str) -> Option<Vec<u8>> {
     let tokens: Vec<&str> = if text.contains(' ') {
         text.split(' ').collect()
     } else {
-        if text.len() % 3 != 0 {
+        if !text.len().is_multiple_of(3) {
             return None;
         }
         text.as_bytes()
