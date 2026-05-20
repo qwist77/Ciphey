@@ -13,6 +13,7 @@ use crate::decoders::base58_monero_decoder::Base58MoneroDecoder;
 use crate::decoders::base62_decoder::Base62Decoder;
 use crate::decoders::base69_decoder::Base69Decoder;
 use crate::decoders::base85_decoder::Base85Decoder;
+use crate::decoders::baudot_decoder::BaudotDecoder;
 use crate::decoders::binary_decoder::BinaryDecoder;
 use crate::decoders::hexadecimal_decoder::HexadecimalDecoder;
 use crate::DecoderResult;
@@ -29,7 +30,11 @@ use crate::decoders::caesar_decoder::CaesarDecoder;
 use crate::decoders::citrix_ctx1_decoder::CitrixCTX1Decoder;
 use crate::decoders::crack_results::CrackResult;
 use crate::decoders::decimal_decoder::DecimalDecoder;
+use crate::decoders::dna_decoder::DnaDecoder;
+use crate::decoders::dtmf_decoder::DtmfDecoder;
+use crate::decoders::galactic_decoder::GalacticDecoder;
 use crate::decoders::interface::{Crack, Decoder};
+use crate::decoders::leetspeak_decoder::LeetspeakDecoder;
 use crate::decoders::morse_code::MorseCodeDecoder;
 use crate::decoders::multi_tap_decoder::MultiTapDecoder;
 use crate::decoders::octal_decoder::OctalDecoder;
@@ -250,6 +255,11 @@ pub fn filter_and_get_decoders(_text_struct: &DecoderResult) -> Decoders {
     let base65536 = Decoder::<Base65536Decoder>::new();
     let citrix_ctx1 = Decoder::<CitrixCTX1Decoder>::new();
     let decimal = Decoder::<DecimalDecoder>::new();
+    let baudot = Decoder::<BaudotDecoder>::new();
+    let dna = Decoder::<DnaDecoder>::new();
+    let dtmf = Decoder::<DtmfDecoder>::new();
+    let galactic = Decoder::<GalacticDecoder>::new();
+    let leetspeak = Decoder::<LeetspeakDecoder>::new();
     let url = Decoder::<URLDecoder>::new();
     let ascii85 = Decoder::<Ascii85Decoder>::new();
     let base62 = Decoder::<Base62Decoder>::new();
@@ -291,6 +301,11 @@ pub fn filter_and_get_decoders(_text_struct: &DecoderResult) -> Decoders {
             Box::new(hexadecimal),
             Box::new(decimal),
             Box::new(octal),
+            Box::new(baudot),
+            Box::new(dna),
+            Box::new(dtmf),
+            Box::new(galactic),
+            Box::new(leetspeak),
             Box::new(base32),
             Box::new(morsecodedecoder),
             Box::new(multi_tap),

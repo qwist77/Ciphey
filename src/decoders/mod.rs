@@ -23,6 +23,8 @@ pub mod base62_decoder;
 pub mod base69_decoder;
 /// The base85_decoder module decodes base85
 pub mod base85_decoder;
+/// The baudot_decoder module decodes Baudot code
+pub mod baudot_decoder;
 /// The binary_decoder module decodes binary
 pub mod binary_decoder;
 /// The hexadecimal_decoder module decodes hexadecimal
@@ -48,6 +50,14 @@ pub mod citrix_ctx1_decoder;
 pub mod crack_results;
 /// The decimal_decoder module decodes decimal byte values
 pub mod decimal_decoder;
+/// The dna_decoder module decodes DNA codons
+pub mod dna_decoder;
+/// The dtmf_decoder module decodes DTMF frequency pairs
+pub mod dtmf_decoder;
+/// The galactic_decoder module decodes Standard Galactic Alphabet
+pub mod galactic_decoder;
+/// The leetspeak_decoder module decodes leetspeak
+pub mod leetspeak_decoder;
 /// The url_decoder module decodes url
 pub mod url_decoder;
 
@@ -103,6 +113,7 @@ use base58_ripple_decoder::Base58RippleDecoder;
 use base62_decoder::Base62Decoder;
 use base69_decoder::Base69Decoder;
 use base85_decoder::Base85Decoder;
+use baudot_decoder::BaudotDecoder;
 use binary_decoder::BinaryDecoder;
 use hexadecimal_decoder::HexadecimalDecoder;
 use interface::{Crack, Decoder};
@@ -115,6 +126,10 @@ use braille_decoder::BrailleDecoder;
 use caesar_decoder::CaesarDecoder;
 use citrix_ctx1_decoder::CitrixCTX1Decoder;
 use decimal_decoder::DecimalDecoder;
+use dna_decoder::DnaDecoder;
+use dtmf_decoder::DtmfDecoder;
+use galactic_decoder::GalacticDecoder;
+use leetspeak_decoder::LeetspeakDecoder;
 use morse_code::MorseCodeDecoder;
 use multi_tap_decoder::MultiTapDecoder;
 use octal_decoder::OctalDecoder;
@@ -143,6 +158,8 @@ pub enum DecoderType {
     AtbashDecoder(atbash_decoder::AtbashDecoder),
     /// ascii85 decoder
     Ascii85Decoder(ascii85_decoder::Ascii85Decoder),
+    /// baudot decoder
+    BaudotDecoder(baudot_decoder::BaudotDecoder),
     /// base32 decoder
     Base32Decoder(base32_decoder::Base32Decoder),
     /// base62 decoder
@@ -173,6 +190,14 @@ pub enum DecoderType {
     CitrixCtx1Decoder(citrix_ctx1_decoder::CitrixCTX1Decoder),
     /// decimal decoder
     DecimalDecoder(decimal_decoder::DecimalDecoder),
+    /// dna decoder
+    DnaDecoder(dna_decoder::DnaDecoder),
+    /// dtmf decoder
+    DtmfDecoder(dtmf_decoder::DtmfDecoder),
+    /// galactic decoder
+    GalacticDecoder(galactic_decoder::GalacticDecoder),
+    /// leetspeak decoder
+    LeetspeakDecoder(leetspeak_decoder::LeetspeakDecoder),
     /// url decoder
     UrlDecoder(url_decoder::URLDecoder),
     /// reverse decoder
@@ -267,6 +292,17 @@ pub static DECODER_MAP: Lazy<HashMap<&str, DecoderBox>> = Lazy::new(|| {
             DecoderBox::new(Decoder::<CitrixCTX1Decoder>::new()),
         ),
         ("decimal", DecoderBox::new(Decoder::<DecimalDecoder>::new())),
+        ("baudot", DecoderBox::new(Decoder::<BaudotDecoder>::new())),
+        ("dna", DecoderBox::new(Decoder::<DnaDecoder>::new())),
+        ("dtmf", DecoderBox::new(Decoder::<DtmfDecoder>::new())),
+        (
+            "galactic",
+            DecoderBox::new(Decoder::<GalacticDecoder>::new()),
+        ),
+        (
+            "leetspeak",
+            DecoderBox::new(Decoder::<LeetspeakDecoder>::new()),
+        ),
         ("URL", DecoderBox::new(Decoder::<URLDecoder>::new())),
         ("ascii85", DecoderBox::new(Decoder::<Ascii85Decoder>::new())),
         ("Base62", DecoderBox::new(Decoder::<Base62Decoder>::new())),
