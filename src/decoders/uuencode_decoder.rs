@@ -104,9 +104,7 @@ fn decode_uu_line(line: &str) -> Option<Vec<u8>> {
         decoded.push((b << 4) | (c >> 2));
         decoded.push((c << 6) | d);
     }
-    if decoded.len() < expected_len {
-        return None;
-    }
+    decoded.resize(expected_len, 0);
     if decoded[expected_len..].iter().any(|byte| *byte != 0) {
         return None;
     }
@@ -154,6 +152,14 @@ mod tests {
     #[test]
     fn rejects_invalid_short_chunk() {
         assert_eq!(decode_uuencode("+abc"), None);
+    }
+
+    #[test]
+    fn pads_missing_short_line_payload_like_python() {
+        assert_eq!(
+            decode_uu_line("+").expect("line should decode"),
+            vec![0; 11]
+        );
     }
 
     #[test]
