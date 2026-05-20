@@ -13,6 +13,16 @@ use log::{info, trace};
 const MAX_KEY_SIZE: usize = 16;
 const KEY_BYTE_BEAM: usize = 3;
 const MAX_KEYS_PER_SIZE: usize = 32;
+const BINARY_SIGNATURES: [&[u8]; 8] = [
+    b"\x1f\x8b\x08",
+    b"PK\x03\x04",
+    b"\x89PNG\r\n\x1a\n",
+    b"%PDF-",
+    b"\x7fELF",
+    b"\xff\xd8\xff",
+    b"BZh",
+    b"\xfd7zXZ\x00",
+];
 
 /// Repeating-key XOR cracker.
 pub struct XorCryptDecoder;
@@ -119,8 +129,46 @@ fn xorcrypt_candidates(bytes: &[u8]) -> Vec<(String, String, f32)> {
             );
             candidates.push((text, key_info, score));
         }
+        for key in binary_signature_keys(bytes, key_size) {
+            let decoded = xor_repeating(bytes, &key);
+            let (text, base_score) = bytes_to_candidate_text(decoded);
+            let score = base_score - key_size as f32 * 0.2;
+            let key_info = format!(
+                "0x{}",
+                key.iter()
+                    .map(|byte| format!("{byte:02x}"))
+                    .collect::<String>()
+            );
+            candidates.push((text, key_info, score));
+        }
     }
     candidates
+}
+
+fn binary_signature_keys(bytes: &[u8], key_size: usize) -> Vec<Vec<u8>> {
+    let mut keys = Vec::new();
+    for signature in BINARY_SIGNATURES {
+        if key_size > signature.len() || key_size > bytes.len() {
+            continue;
+        }
+
+        let key: Vec<u8> = bytes
+            .iter()
+            .zip(signature.iter())
+            .take(key_size)
+            .map(|(byte, signature_byte)| byte ^ signature_byte)
+            .collect();
+        let prefix_len = signature.len().min(bytes.len());
+        let matches_signature = bytes
+            .iter()
+            .enumerate()
+            .take(prefix_len)
+            .all(|(index, byte)| (*byte ^ key[index % key_size]) == signature[index]);
+        if matches_signature && !keys.contains(&key) {
+            keys.push(key);
+        }
+    }
+    keys
 }
 
 fn derive_keys(bytes: &[u8], key_size: usize) -> Vec<Vec<u8>> {
@@ -239,10 +287,15 @@ mod tests {
 
     #[test]
     fn crack_preserves_non_utf8_output_as_hex_carrier() {
+        let encrypted = xor_repeating(&[0x1f, 0x8b, 0x08, 0xff], b"ice");
+        let encoded = encrypted
+            .iter()
+            .map(|byte| format!("{byte:02x}"))
+            .collect::<String>();
         let decoder = Decoder::<XorCryptDecoder>::new();
-        let result = decoder.crack("ff00", &get_athena_checker());
+        let result = decoder.crack(&encoded, &get_athena_checker());
         let texts = result.unencrypted_text.unwrap();
-        assert!(texts.iter().any(|candidate| candidate == "ff00"));
+        assert!(texts.iter().any(|candidate| candidate == "1f8b08ff"));
     }
 
     #[test]
