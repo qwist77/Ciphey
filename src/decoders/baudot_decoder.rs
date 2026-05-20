@@ -155,6 +155,10 @@ fn baudot_symbol(token: &str, figure_shift: bool) -> Option<&'static str> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::checkers::{
+        checker_type::{Check, Checker},
+        english::EnglishChecker,
+    };
 
     #[test]
     fn decodes_letters() {
@@ -183,5 +187,13 @@ mod tests {
             decode_baudot("10100 00110 00100 11011 10011 10110 10011 10101 01101"),
             Some("HI 2026!".to_string())
         );
+    }
+    #[test]
+    fn crack_decodes_baudot_public_path() {
+        let checker = CheckerTypes::CheckEnglish(Checker::<EnglishChecker>::new());
+        let decoder = Decoder::<BaudotDecoder>::new();
+        let result = decoder.crack("10100 00001 10010 10010 11000", &checker);
+
+        assert_eq!(result.unencrypted_text.as_ref().unwrap()[0], "HELLO");
     }
 }

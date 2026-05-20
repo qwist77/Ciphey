@@ -115,6 +115,7 @@ mod tests {
     use crate::checkers::{
         athena::Athena,
         checker_type::{Check, Checker},
+        english::EnglishChecker,
     };
 
     fn get_athena_checker() -> CheckerTypes {
@@ -148,5 +149,14 @@ mod tests {
             decode_tap_code("2,3 1,5 3,1 3,5  3,2 1,5"),
             Some("HELP ME".to_string())
         );
+    }
+    #[test]
+    fn crack_decodes_tap_code_public_path() {
+        let checker = CheckerTypes::CheckEnglish(Checker::<EnglishChecker>::new());
+        let decoder = Decoder::<TapCodeDecoder>::new();
+        let result = decoder.crack("2,3 1,5 3,1 3,1 3,4", &checker);
+
+        assert!(result.success);
+        assert_eq!(result.unencrypted_text.as_ref().unwrap()[0], "HELLO");
     }
 }

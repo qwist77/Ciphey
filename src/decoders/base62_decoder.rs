@@ -106,6 +106,10 @@ fn base62_value(ch: char) -> Option<u8> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::checkers::{
+        checker_type::{Check, Checker},
+        english::EnglishChecker,
+    };
 
     #[test]
     fn decodes_pybase62_vector() {
@@ -128,5 +132,14 @@ mod tests {
     #[test]
     fn preserves_multiple_leading_nulls_before_payload() {
         assert_eq!(decode_base62("024oz"), Some("\0\0Hi".to_string()));
+    }
+    #[test]
+    fn crack_decodes_base62_public_path() {
+        let checker = CheckerTypes::CheckEnglish(Checker::<EnglishChecker>::new());
+        let decoder = Decoder::<Base62Decoder>::new();
+        let result = decoder.crack("AAwf93rvy4aWQVw", &checker);
+
+        assert!(result.success);
+        assert_eq!(result.unencrypted_text.as_ref().unwrap()[0], "hello world");
     }
 }

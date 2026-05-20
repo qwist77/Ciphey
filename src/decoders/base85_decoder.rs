@@ -126,6 +126,10 @@ fn base85_chunk_to_bytes(chunk: &[u32], output_len: usize) -> Option<Vec<u8>> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::checkers::{
+        checker_type::{Check, Checker},
+        english::EnglishChecker,
+    };
 
     #[test]
     fn decodes_python_base85_vector() {
@@ -151,5 +155,14 @@ mod tests {
     #[test]
     fn decodes_standard_man_vector() {
         assert_eq!(decode_base85("O<`^z"), Some("Man ".to_string()));
+    }
+    #[test]
+    fn crack_decodes_base85_public_path() {
+        let checker = CheckerTypes::CheckEnglish(Checker::<EnglishChecker>::new());
+        let decoder = Decoder::<Base85Decoder>::new();
+        let result = decoder.crack("Xk~0{Zy<MXa%^M", &checker);
+
+        assert!(result.success);
+        assert_eq!(result.unencrypted_text.as_ref().unwrap()[0], "hello world");
     }
 }

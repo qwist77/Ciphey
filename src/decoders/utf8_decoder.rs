@@ -81,6 +81,7 @@ mod tests {
     use crate::checkers::{
         athena::Athena,
         checker_type::{Check, Checker},
+        english::EnglishChecker,
         CheckerTypes,
     };
     use crate::decoders::interface::Crack;
@@ -143,5 +144,17 @@ mod tests {
         assert_eq!(decode_utf8_bytes(&[0xc0, 0xaf]), None);
         assert_eq!(decode_utf8_bytes(&[0xed, 0xa0, 0x80]), None);
         assert_eq!(decode_utf8_bytes(&[0xf4, 0x90, 0x80, 0x80]), None);
+    }
+    #[test]
+    fn crack_decodes_hex_escape_utf8_public_path() {
+        let checker = CheckerTypes::CheckEnglish(Checker::<EnglishChecker>::new());
+        let decoder = Decoder::<Utf8Decoder>::new();
+        let result = decoder.crack(
+            "\\x68\\x65\\x6c\\x6c\\x6f\\x20\\x77\\x6f\\x72\\x6c\\x64",
+            &checker,
+        );
+
+        assert!(result.success);
+        assert_eq!(result.unencrypted_text.as_ref().unwrap()[0], "hello world");
     }
 }

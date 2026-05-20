@@ -108,6 +108,10 @@ fn dtmf_symbol(chunk: &str) -> Option<&'static str> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::checkers::{
+        checker_type::{Check, Checker},
+        english::EnglishChecker,
+    };
 
     #[test]
     fn decodes_dtmf_frequency_pairs() {
@@ -144,5 +148,13 @@ mod tests {
     fn rejects_invalid_dtmf_low_low_and_high_high_pairs() {
         assert_eq!(decode_dtmf("697/770"), None);
         assert_eq!(decode_dtmf("1209/1336"), None);
+    }
+    #[test]
+    fn crack_decodes_dtmf_public_path() {
+        let checker = CheckerTypes::CheckEnglish(Checker::<EnglishChecker>::new());
+        let decoder = Decoder::<DtmfDecoder>::new();
+        let result = decoder.crack("1209/697,1336/697", &checker);
+
+        assert_eq!(result.unencrypted_text.as_ref().unwrap()[0], "12");
     }
 }

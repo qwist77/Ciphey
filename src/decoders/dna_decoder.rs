@@ -113,6 +113,10 @@ fn dna_codon(codon: &str) -> Option<&'static str> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::checkers::{
+        checker_type::{Check, Checker},
+        english::EnglishChecker,
+    };
 
     #[test]
     fn decodes_dna_codons() {
@@ -135,5 +139,13 @@ mod tests {
             decode_dna("ATGGCCATTGTAATGGGCCGCTGAAAGGGTGCCCGATAG"),
             Some("MAIVMGR.KGAR.".to_string())
         );
+    }
+    #[test]
+    fn crack_decodes_dna_public_path() {
+        let checker = CheckerTypes::CheckEnglish(Checker::<EnglishChecker>::new());
+        let decoder = Decoder::<DnaDecoder>::new();
+        let result = decoder.crack("AUGGCCUAA", &checker);
+
+        assert!(result.unencrypted_text.is_none());
     }
 }

@@ -180,6 +180,10 @@ fn decode_baconian(text: &str) -> Option<Vec<String>> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::checkers::{
+        checker_type::{Check, Checker},
+        english::EnglishChecker,
+    };
 
     #[test]
     fn decodes_both_baconian_variants() {
@@ -210,5 +214,17 @@ mod tests {
     #[test]
     fn does_not_return_partial_classic_candidate_for_unique_only_symbols() {
         assert_eq!(decode_baconian("AAAAA BBAAA"), Some(vec!["AY".to_string()]));
+    }
+    #[test]
+    fn crack_decodes_baconian_public_path() {
+        let checker = CheckerTypes::CheckEnglish(Checker::<EnglishChecker>::new());
+        let decoder = Decoder::<BaconianDecoder>::new();
+        let result = decoder.crack("AABBB AABAA ABABB ABABB ABBBA", &checker);
+
+        assert!(result
+            .unencrypted_text
+            .as_ref()
+            .unwrap()
+            .contains(&"HELLO".to_string()));
     }
 }

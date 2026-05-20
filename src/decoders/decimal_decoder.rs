@@ -90,6 +90,10 @@ fn is_decimal_delimiter(ch: char) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::checkers::{
+        checker_type::{Check, Checker},
+        english::EnglishChecker,
+    };
 
     #[test]
     fn decodes_decimal_values() {
@@ -131,5 +135,14 @@ mod tests {
     fn decodes_nul_and_rejects_non_utf8_decimal_bytes() {
         assert_eq!(decode_decimal("0 65 0"), Some("\0A\0".to_string()));
         assert_eq!(decode_decimal("255"), None);
+    }
+    #[test]
+    fn crack_decodes_decimal_public_path() {
+        let checker = CheckerTypes::CheckEnglish(Checker::<EnglishChecker>::new());
+        let decoder = Decoder::<DecimalDecoder>::new();
+        let result = decoder.crack("104 101 108 108 111 32 119 111 114 108 100", &checker);
+
+        assert!(result.success);
+        assert_eq!(result.unencrypted_text.as_ref().unwrap()[0], "hello world");
     }
 }

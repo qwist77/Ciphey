@@ -91,6 +91,10 @@ fn decode_leetspeak(text: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::checkers::{
+        checker_type::{Check, Checker},
+        english::EnglishChecker,
+    };
 
     #[test]
     fn decodes_leetspeak_in_python_order() {
@@ -105,5 +109,14 @@ mod tests {
     #[test]
     fn decodes_multichar_leetspeak_tokens() {
         assert_eq!(decode_leetspeak("P4|>3R_\\/\\/1N5"), "PAPER WINS");
+    }
+    #[test]
+    fn crack_decodes_leetspeak_public_path() {
+        let checker = CheckerTypes::CheckEnglish(Checker::<EnglishChecker>::new());
+        let decoder = Decoder::<LeetspeakDecoder>::new();
+        let result = decoder.crack("h3ll0_w0rld", &checker);
+
+        assert!(result.success);
+        assert_eq!(result.unencrypted_text.as_ref().unwrap()[0], "hEllO wOrld");
     }
 }

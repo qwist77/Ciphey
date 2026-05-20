@@ -134,6 +134,10 @@ fn chars_to_base69_byte(pair: &str) -> Option<u16> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::checkers::{
+        checker_type::{Check, Checker},
+        english::EnglishChecker,
+    };
 
     #[test]
     fn decodes_full_chunk() {
@@ -167,5 +171,13 @@ mod tests {
             decode_base69("gALBDB0AiA VAMACB"),
             Some("ABCDEFG".to_string())
         );
+    }
+    #[test]
+    fn crack_decodes_base69_public_path() {
+        let checker = CheckerTypes::CheckEnglish(Checker::<EnglishChecker>::new());
+        let decoder = Decoder::<Base69Decoder>::new();
+        let result = decoder.crack("gALBDB0AiAVAMACB", &checker);
+
+        assert_eq!(result.unencrypted_text.as_ref().unwrap()[0], "ABCDEFG");
     }
 }

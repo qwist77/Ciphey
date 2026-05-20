@@ -127,6 +127,10 @@ fn galactic_symbol(ch: char) -> Option<&'static str> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::checkers::{
+        checker_type::{Check, Checker},
+        english::EnglishChecker,
+    };
 
     #[test]
     fn decodes_galactic_symbols() {
@@ -152,5 +156,14 @@ mod tests {
             decode_galactic("\u{1511}\u{0296}\u{14f5}\u{21b8}\u{14b7}\u{2393}\u{22a3}\u{2351}\u{254e}\u{22ee}\u{a58c}\u{a58e}\u{14b2}\u{30ea}\u{1d679}!\u{1451}\u{2237}\u{14ed}\u{2138}\u{268d}\u{234a}\u{2234}\u{0307}|\u{2a05}"),
             Some("abcdefghijklmnopqrstuvwxyz".to_string())
         );
+    }
+    #[test]
+    fn crack_decodes_galactic_public_path() {
+        let checker = CheckerTypes::CheckEnglish(Checker::<EnglishChecker>::new());
+        let decoder = Decoder::<GalacticDecoder>::new();
+        let result = decoder.crack("⍑ᒷꖎꖎ𝙹", &checker);
+
+        assert!(result.success);
+        assert_eq!(result.unencrypted_text.as_ref().unwrap()[0], "hello");
     }
 }

@@ -79,6 +79,10 @@ fn decode_ascii85(text: &str) -> Option<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::checkers::{
+        checker_type::{Check, Checker},
+        english::EnglishChecker,
+    };
 
     #[test]
     fn decodes_python_ascii85_vector() {
@@ -119,5 +123,14 @@ mod tests {
     #[test]
     fn rejects_z_inside_ascii85_tuple() {
         assert_eq!(decode_ascii85("Az"), None);
+    }
+    #[test]
+    fn crack_decodes_ascii85_public_path() {
+        let checker = CheckerTypes::CheckEnglish(Checker::<EnglishChecker>::new());
+        let decoder = Decoder::<Ascii85Decoder>::new();
+        let result = decoder.crack("BOu!rD]j7BEbo7", &checker);
+
+        assert!(result.success);
+        assert_eq!(result.unencrypted_text.as_ref().unwrap()[0], "hello world");
     }
 }

@@ -100,6 +100,10 @@ fn decode_num_to_char(number: &str) -> Option<char> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::checkers::{
+        checker_type::{Check, Checker},
+        english::EnglishChecker,
+    };
 
     #[test]
     fn decodes_multi_tap() {
@@ -127,5 +131,14 @@ mod tests {
     #[test]
     fn decodes_four_press_keys_7_and_9() {
         assert_eq!(decode_multi_tap("7777 9999"), Some("SZ".to_string()));
+    }
+    #[test]
+    fn crack_decodes_multi_tap_public_path() {
+        let checker = CheckerTypes::CheckEnglish(Checker::<EnglishChecker>::new());
+        let decoder = Decoder::<MultiTapDecoder>::new();
+        let result = decoder.crack("44 33 555 555 666 0 9 666 777 555 3", &checker);
+
+        assert!(result.success);
+        assert_eq!(result.unencrypted_text.as_ref().unwrap()[0], "HELLO WORLD");
     }
 }

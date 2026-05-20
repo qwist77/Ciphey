@@ -102,6 +102,10 @@ fn decode_octal_bytes(text: &str) -> Option<Vec<u8>> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::checkers::{
+        checker_type::{Check, Checker},
+        english::EnglishChecker,
+    };
 
     #[test]
     fn decodes_concatenated_triplets() {
@@ -137,5 +141,14 @@ mod tests {
         assert_eq!(decode_octal("303 251"), Some("é".to_string()));
         assert_eq!(decode_octal("377"), None);
         assert_eq!(decode_octal("128"), None);
+    }
+    #[test]
+    fn crack_decodes_octal_public_path() {
+        let checker = CheckerTypes::CheckEnglish(Checker::<EnglishChecker>::new());
+        let decoder = Decoder::<OctalDecoder>::new();
+        let result = decoder.crack("150 145 154 154 157 040 167 157 162 154 144", &checker);
+
+        assert!(result.success);
+        assert_eq!(result.unencrypted_text.as_ref().unwrap()[0], "hello world");
     }
 }
