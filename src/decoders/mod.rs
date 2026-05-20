@@ -56,6 +56,8 @@ pub mod dna_decoder;
 pub mod dtmf_decoder;
 /// The galactic_decoder module decodes Standard Galactic Alphabet
 pub mod galactic_decoder;
+/// The gzip_decoder module decodes gzip-compressed bytes
+pub mod gzip_decoder;
 /// The leetspeak_decoder module decodes leetspeak
 pub mod leetspeak_decoder;
 /// The url_decoder module decodes url
@@ -88,6 +90,10 @@ pub mod rot47_decoder;
 
 /// The tap_code_decoder module decodes tap code coordinates
 pub mod tap_code_decoder;
+/// The utf8_decoder module decodes UTF-8 bytes
+pub mod utf8_decoder;
+/// The uuencode_decoder module decodes uuencoded text
+pub mod uuencode_decoder;
 /// For the z85 cipher decoder
 pub mod z85_decoder;
 
@@ -129,6 +135,7 @@ use decimal_decoder::DecimalDecoder;
 use dna_decoder::DnaDecoder;
 use dtmf_decoder::DtmfDecoder;
 use galactic_decoder::GalacticDecoder;
+use gzip_decoder::GzipDecoder;
 use leetspeak_decoder::LeetspeakDecoder;
 use morse_code::MorseCodeDecoder;
 use multi_tap_decoder::MultiTapDecoder;
@@ -139,6 +146,8 @@ use rot47_decoder::ROT47Decoder;
 use substitution_generic_decoder::SubstitutionGenericDecoder;
 use tap_code_decoder::TapCodeDecoder;
 use url_decoder::URLDecoder;
+use utf8_decoder::Utf8Decoder;
+use uuencode_decoder::UuencodeDecoder;
 use vigenere_decoder::VigenereDecoder;
 use z85_decoder::Z85Decoder;
 
@@ -196,6 +205,8 @@ pub enum DecoderType {
     DtmfDecoder(dtmf_decoder::DtmfDecoder),
     /// galactic decoder
     GalacticDecoder(galactic_decoder::GalacticDecoder),
+    /// gzip decoder
+    GzipDecoder(gzip_decoder::GzipDecoder),
     /// leetspeak decoder
     LeetspeakDecoder(leetspeak_decoder::LeetspeakDecoder),
     /// url decoder
@@ -218,6 +229,10 @@ pub enum DecoderType {
     Z85Decoder(z85_decoder::Z85Decoder),
     /// tap code decoder
     TapCodeDecoder(tap_code_decoder::TapCodeDecoder),
+    /// UTF-8 decoder
+    Utf8Decoder(utf8_decoder::Utf8Decoder),
+    /// uuencode decoder
+    UuencodeDecoder(uuencode_decoder::UuencodeDecoder),
     /// braille decoder
     BrailleDecoder(braille_decoder::BrailleDecoder),
     /// substitution decoder
@@ -299,6 +314,7 @@ pub static DECODER_MAP: Lazy<HashMap<&str, DecoderBox>> = Lazy::new(|| {
             "galactic",
             DecoderBox::new(Decoder::<GalacticDecoder>::new()),
         ),
+        ("gzip", DecoderBox::new(Decoder::<GzipDecoder>::new())),
         (
             "leetspeak",
             DecoderBox::new(Decoder::<LeetspeakDecoder>::new()),
@@ -330,6 +346,11 @@ pub static DECODER_MAP: Lazy<HashMap<&str, DecoderBox>> = Lazy::new(|| {
         (
             "tap_code",
             DecoderBox::new(Decoder::<TapCodeDecoder>::new()),
+        ),
+        ("utf8", DecoderBox::new(Decoder::<Utf8Decoder>::new())),
+        (
+            "uuencode",
+            DecoderBox::new(Decoder::<UuencodeDecoder>::new()),
         ),
         ("a1z26", DecoderBox::new(Decoder::<A1Z26Decoder>::new())),
         ("Braille", DecoderBox::new(Decoder::<BrailleDecoder>::new())),

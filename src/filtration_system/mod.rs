@@ -33,6 +33,7 @@ use crate::decoders::decimal_decoder::DecimalDecoder;
 use crate::decoders::dna_decoder::DnaDecoder;
 use crate::decoders::dtmf_decoder::DtmfDecoder;
 use crate::decoders::galactic_decoder::GalacticDecoder;
+use crate::decoders::gzip_decoder::GzipDecoder;
 use crate::decoders::interface::{Crack, Decoder};
 use crate::decoders::leetspeak_decoder::LeetspeakDecoder;
 use crate::decoders::morse_code::MorseCodeDecoder;
@@ -44,6 +45,8 @@ use crate::decoders::rot47_decoder::ROT47Decoder;
 use crate::decoders::substitution_generic_decoder::SubstitutionGenericDecoder;
 use crate::decoders::tap_code_decoder::TapCodeDecoder;
 use crate::decoders::url_decoder::URLDecoder;
+use crate::decoders::utf8_decoder::Utf8Decoder;
+use crate::decoders::uuencode_decoder::UuencodeDecoder;
 use crate::decoders::vigenere_decoder::VigenereDecoder;
 use crate::decoders::z85_decoder::Z85Decoder;
 
@@ -259,6 +262,7 @@ pub fn filter_and_get_decoders(_text_struct: &DecoderResult) -> Decoders {
     let dna = Decoder::<DnaDecoder>::new();
     let dtmf = Decoder::<DtmfDecoder>::new();
     let galactic = Decoder::<GalacticDecoder>::new();
+    let gzip = Decoder::<GzipDecoder>::new();
     let leetspeak = Decoder::<LeetspeakDecoder>::new();
     let url = Decoder::<URLDecoder>::new();
     let ascii85 = Decoder::<Ascii85Decoder>::new();
@@ -276,6 +280,8 @@ pub fn filter_and_get_decoders(_text_struct: &DecoderResult) -> Decoders {
     let rot47decoder = Decoder::<ROT47Decoder>::new();
     let z85 = Decoder::<Z85Decoder>::new();
     let tap_code = Decoder::<TapCodeDecoder>::new();
+    let utf8 = Decoder::<Utf8Decoder>::new();
+    let uuencode = Decoder::<UuencodeDecoder>::new();
     let a1z26decoder = Decoder::<A1Z26Decoder>::new();
     let brailledecoder = Decoder::<BrailleDecoder>::new();
     let substitution_generic = Decoder::<SubstitutionGenericDecoder>::new();
@@ -305,11 +311,14 @@ pub fn filter_and_get_decoders(_text_struct: &DecoderResult) -> Decoders {
             Box::new(dna),
             Box::new(dtmf),
             Box::new(galactic),
+            Box::new(gzip),
             Box::new(leetspeak),
             Box::new(base32),
             Box::new(morsecodedecoder),
             Box::new(multi_tap),
             Box::new(tap_code),
+            Box::new(utf8),
+            Box::new(uuencode),
             Box::new(atbashdecoder),
             Box::new(caesardecoder),
             Box::new(railfencedecoder),
