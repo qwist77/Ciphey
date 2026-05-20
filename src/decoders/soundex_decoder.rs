@@ -10,6 +10,9 @@ use log::{info, trace};
 use once_cell::sync::Lazy;
 use std::collections::HashMap;
 
+const MAX_SOUNDEX_WORDS_PER_CODE: usize = 20;
+const MAX_SOUNDEX_SENTENCES: usize = 200;
+
 static SOUNDEX_DICT: Lazy<HashMap<String, Vec<String>>> = Lazy::new(|| {
     serde_json::from_str(include_str!("data/soundex.json"))
         .expect("bundled soundex dictionary should be valid JSON")
@@ -102,7 +105,10 @@ fn soundex_candidates(text: &str) -> Option<Vec<String>> {
     for chunk in cleaned.as_bytes().chunks(4) {
         let code = std::str::from_utf8(chunk).ok()?;
         if let Some(words) = SOUNDEX_DICT.get(code) {
-            word_lists.push(words.clone());
+            let mut ranked_words = words.clone();
+            ranked_words.sort_by_key(|word| word_rank(word));
+            ranked_words.truncate(MAX_SOUNDEX_WORDS_PER_CODE);
+            word_lists.push(ranked_words);
         }
     }
     if word_lists.is_empty() {
@@ -112,6 +118,7 @@ fn soundex_candidates(text: &str) -> Option<Vec<String>> {
     let mut sentences = Vec::new();
     build_sentences(&word_lists, 0, &mut Vec::new(), &mut sentences);
     sentences.sort_by_key(|sentence| sentence_rank(sentence));
+    sentences.truncate(50);
     Some(sentences)
 }
 
@@ -121,12 +128,18 @@ fn build_sentences(
     current: &mut Vec<String>,
     sentences: &mut Vec<String>,
 ) {
+    if sentences.len() >= MAX_SOUNDEX_SENTENCES {
+        return;
+    }
     if index == word_lists.len() {
         sentences.push(current.join(" "));
         return;
     }
 
     for word in &word_lists[index] {
+        if sentences.len() >= MAX_SOUNDEX_SENTENCES {
+            break;
+        }
         current.push(word.clone());
         build_sentences(word_lists, index + 1, current, sentences);
         current.pop();
@@ -138,6 +151,10 @@ fn sentence_rank(sentence: &str) -> usize {
         .split_whitespace()
         .map(|word| FREQUENCY_RANKS.get(word).copied().unwrap_or(5000))
         .sum()
+}
+
+fn word_rank(word: &str) -> usize {
+    FREQUENCY_RANKS.get(word).copied().unwrap_or(5000)
 }
 
 #[cfg(test)]
@@ -167,5 +184,11 @@ mod tests {
     #[test]
     fn rejects_invalid_soundex_chars() {
         assert_eq!(soundex_candidates("H236!"), None);
+    }
+
+    #[test]
+    fn caps_high_fanout_soundex_candidates() {
+        let candidates = soundex_candidates("P632 P632 P632 P632 P632").expect("candidates");
+        assert!(candidates.len() <= 50);
     }
 }

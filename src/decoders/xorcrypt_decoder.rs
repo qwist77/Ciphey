@@ -11,6 +11,8 @@ use super::interface::{Crack, Decoder};
 use log::{info, trace};
 
 const MAX_KEY_SIZE: usize = 16;
+const KEY_BYTE_BEAM: usize = 3;
+const MAX_KEYS_PER_SIZE: usize = 32;
 
 /// Repeating-key XOR cracker.
 pub struct XorCryptDecoder;
@@ -30,6 +32,9 @@ impl Crack for Decoder<XorCryptDecoder> {
     fn crack(&self, text: &str, checker: &CheckerTypes) -> CrackResult {
         trace!("Trying repeating-key XOR with text {:?}", text);
         let mut results = CrackResult::new(self, text.to_string());
+        if text.is_empty() {
+            return results;
+        }
         let bytes = parse_textual_bytes(text).unwrap_or_else(|| text.as_bytes().to_vec());
         let mut candidates = xorcrypt_candidates(&bytes);
         candidates.sort_by(|left, right| right.2.total_cmp(&left.2));
@@ -51,13 +56,15 @@ impl Crack for Decoder<XorCryptDecoder> {
             }
         }
 
-        results.unencrypted_text = Some(
-            candidates
-                .into_iter()
-                .take(50)
-                .map(|(candidate, _, _)| candidate)
-                .collect(),
-        );
+        if !candidates.is_empty() {
+            results.unencrypted_text = Some(
+                candidates
+                    .into_iter()
+                    .take(50)
+                    .map(|(candidate, _, _)| candidate)
+                    .collect(),
+            );
+        }
         results
     }
 
@@ -89,10 +96,22 @@ fn xorcrypt_candidates(bytes: &[u8]) -> Vec<(String, String, f32)> {
     let max_key_size = MAX_KEY_SIZE.min(bytes.len());
     let mut candidates = Vec::new();
     for key_size in 2..=max_key_size {
-        let key = derive_key(bytes, key_size);
-        let decoded = xor_repeating(bytes, &key);
-        if let Ok(text) = String::from_utf8(decoded) {
-            let score = score_english(&text) - key_size as f32 * 0.2;
+        if key_size == bytes.len() {
+            let key = vec![0; key_size];
+            let decoded = xor_repeating(bytes, &key);
+            let (text, base_score) = bytes_to_candidate_text(decoded);
+            let key_info = format!(
+                "0x{}",
+                key.iter()
+                    .map(|byte| format!("{byte:02x}"))
+                    .collect::<String>()
+            );
+            candidates.push((text, key_info, base_score - key_size as f32 * 0.2));
+        }
+        for key in derive_keys(bytes, key_size) {
+            let decoded = xor_repeating(bytes, &key);
+            let (text, base_score) = bytes_to_candidate_text(decoded);
+            let score = base_score - key_size as f32 * 0.2;
             let key_info = format!(
                 "0x{}",
                 key.iter()
@@ -105,8 +124,8 @@ fn xorcrypt_candidates(bytes: &[u8]) -> Vec<(String, String, f32)> {
     candidates
 }
 
-fn derive_key(bytes: &[u8], key_size: usize) -> Vec<u8> {
-    (0..key_size)
+fn derive_keys(bytes: &[u8], key_size: usize) -> Vec<Vec<u8>> {
+    let top_keys_by_column: Vec<Vec<(u8, f32)>> = (0..key_size)
         .map(|offset| {
             let column: Vec<u8> = bytes
                 .iter()
@@ -114,17 +133,34 @@ fn derive_key(bytes: &[u8], key_size: usize) -> Vec<u8> {
                 .step_by(key_size)
                 .copied()
                 .collect();
-            best_single_byte_key(&column)
+            top_single_byte_keys(&column)
         })
-        .collect()
+        .collect();
+
+    let mut keys = vec![(Vec::new(), 0.0)];
+    for column_keys in top_keys_by_column {
+        let mut next_keys = Vec::new();
+        for (prefix, prefix_score) in &keys {
+            for (byte, byte_score) in &column_keys {
+                let mut key = prefix.clone();
+                key.push(*byte);
+                next_keys.push((key, prefix_score + byte_score));
+            }
+        }
+        next_keys.sort_by(|left, right| right.1.total_cmp(&left.1));
+        next_keys.truncate(MAX_KEYS_PER_SIZE);
+        keys = next_keys;
+    }
+    keys.into_iter().map(|(key, _)| key).collect()
 }
 
-fn best_single_byte_key(bytes: &[u8]) -> u8 {
-    (0u8..=255)
-        .max_by(|left, right| {
-            score_xor_column(bytes, *left).total_cmp(&score_xor_column(bytes, *right))
-        })
-        .unwrap_or(0)
+fn top_single_byte_keys(bytes: &[u8]) -> Vec<(u8, f32)> {
+    let mut keys: Vec<(u8, f32)> = (0u8..=255)
+        .map(|key| (key, score_xor_column(bytes, key)))
+        .collect();
+    keys.sort_by(|left, right| right.1.total_cmp(&left.1));
+    keys.truncate(KEY_BYTE_BEAM);
+    keys
 }
 
 fn score_xor_column(bytes: &[u8], key: u8) -> f32 {
@@ -138,6 +174,23 @@ fn xor_repeating(bytes: &[u8], key: &[u8]) -> Vec<u8> {
         .enumerate()
         .map(|(index, byte)| byte ^ key[index % key.len()])
         .collect()
+}
+
+fn bytes_to_candidate_text(decoded: Vec<u8>) -> (String, f32) {
+    match String::from_utf8(decoded) {
+        Ok(text) => {
+            let score = score_english(&text);
+            (text, score)
+        }
+        Err(error) => {
+            let bytes = error.into_bytes();
+            let text = bytes
+                .iter()
+                .map(|byte| format!("{byte:02x}"))
+                .collect::<String>();
+            (text, -1000.0)
+        }
+    }
 }
 
 #[cfg(test)]
@@ -175,5 +228,20 @@ mod tests {
             "Hello my name is bee and I like dog and apple and tree"
         );
         assert_eq!(result.key.unwrap(), "0x696365");
+    }
+
+    #[test]
+    fn preserves_non_utf8_output_as_hex_carrier() {
+        let candidates = xorcrypt_candidates(&[0xff, 0x00]);
+        assert!(candidates
+            .iter()
+            .any(|(candidate, key, _)| candidate == "ff00" && key == "0x0000"));
+    }
+
+    #[test]
+    fn empty_input_returns_no_candidates() {
+        let decoder = Decoder::<XorCryptDecoder>::new();
+        let result = decoder.crack("", &get_athena_checker());
+        assert!(result.unencrypted_text.is_none());
     }
 }

@@ -29,6 +29,9 @@ impl Crack for Decoder<AffineDecoder> {
     fn crack(&self, text: &str, checker: &CheckerTypes) -> CrackResult {
         trace!("Trying affine cipher with text {:?}", text);
         let mut results = CrackResult::new(self, text.to_string());
+        if text.is_empty() {
+            return results;
+        }
         let mut candidates = affine_candidates(text);
         candidates.sort_by(|left, right| right.2.total_cmp(&left.2));
 
@@ -159,5 +162,12 @@ mod tests {
             result.unencrypted_text.unwrap()[0],
             "Hello my name is bee and I like dog and apple and tree"
         );
+    }
+
+    #[test]
+    fn empty_input_returns_no_candidates() {
+        let decoder = Decoder::<AffineDecoder>::new();
+        let result = decoder.crack("", &get_athena_checker());
+        assert!(result.unencrypted_text.is_none());
     }
 }

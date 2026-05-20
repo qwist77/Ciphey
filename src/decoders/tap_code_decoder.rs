@@ -26,6 +26,9 @@ impl Crack for Decoder<TapCodeDecoder> {
     fn crack(&self, text: &str, checker: &CheckerTypes) -> CrackResult {
         trace!("Trying tap code with text {:?}", text);
         let mut results = CrackResult::new(self, text.to_string());
+        if text.is_empty() {
+            return results;
+        }
         let Some(decoded_text) = decode_tap_code(text) else {
             debug!("Tap code decode failed");
             return results;
@@ -109,6 +112,15 @@ fn tap_code_fragment(fragment: &str) -> Option<&'static str> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::checkers::{
+        athena::Athena,
+        checker_type::{Check, Checker},
+    };
+
+    fn get_athena_checker() -> CheckerTypes {
+        let athena_checker = Checker::<Athena>::new();
+        CheckerTypes::CheckAthena(athena_checker)
+    }
 
     #[test]
     fn decodes_tap_code() {
@@ -121,5 +133,12 @@ mod tests {
     #[test]
     fn rejects_unknown_fragment() {
         assert_eq!(decode_tap_code("1,1 9,9"), None);
+    }
+
+    #[test]
+    fn empty_crack_input_returns_no_candidates() {
+        let decoder = Decoder::<TapCodeDecoder>::new();
+        let result = decoder.crack("", &get_athena_checker());
+        assert!(result.unencrypted_text.is_none());
     }
 }

@@ -27,6 +27,9 @@ impl Crack for Decoder<AsciiShiftDecoder> {
     fn crack(&self, text: &str, checker: &CheckerTypes) -> CrackResult {
         trace!("Trying ASCII shift with text {:?}", text);
         let mut results = CrackResult::new(self, text.to_string());
+        if text.is_empty() {
+            return results;
+        }
         let mut candidates: Vec<(String, String, f32)> = (1..128)
             .map(|shift| {
                 let decoded = ascii_shift(text, shift);
@@ -124,5 +127,12 @@ mod tests {
             result.unencrypted_text.unwrap()[0],
             "Hello my name is bee and I like dog and apple and tree"
         );
+    }
+
+    #[test]
+    fn empty_input_returns_no_candidates() {
+        let decoder = Decoder::<AsciiShiftDecoder>::new();
+        let result = decoder.crack("", &get_athena_checker());
+        assert!(result.unencrypted_text.is_none());
     }
 }

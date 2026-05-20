@@ -28,6 +28,9 @@ impl Crack for Decoder<XorSingleDecoder> {
     fn crack(&self, text: &str, checker: &CheckerTypes) -> CrackResult {
         trace!("Trying single-byte XOR with text {:?}", text);
         let mut results = CrackResult::new(self, text.to_string());
+        if text.is_empty() {
+            return results;
+        }
         let bytes = parse_textual_bytes(text).unwrap_or_else(|| text.as_bytes().to_vec());
         let mut candidates = xor_single_candidates(&bytes);
         candidates.sort_by(|left, right| right.2.total_cmp(&left.2));
@@ -82,13 +85,29 @@ impl Crack for Decoder<XorSingleDecoder> {
 
 fn xor_single_candidates(bytes: &[u8]) -> Vec<(String, String, f32)> {
     (0u8..=255)
-        .filter_map(|key| {
+        .map(|key| {
             let decoded = xor_single_decrypt(bytes, key);
-            let text = String::from_utf8(decoded).ok()?;
-            let score = score_english(&text);
-            Some((text, format!("0x{key:02x}"), score))
+            let (text, score) = bytes_to_candidate_text(decoded);
+            (text, format!("0x{key:02x}"), score)
         })
         .collect()
+}
+
+fn bytes_to_candidate_text(decoded: Vec<u8>) -> (String, f32) {
+    match String::from_utf8(decoded) {
+        Ok(text) => {
+            let score = score_english(&text);
+            (text, score)
+        }
+        Err(error) => {
+            let bytes = error.into_bytes();
+            let text = bytes
+                .iter()
+                .map(|byte| format!("{byte:02x}"))
+                .collect::<String>();
+            (text, -1000.0)
+        }
+    }
 }
 
 fn xor_single_decrypt(bytes: &[u8], key: u8) -> Vec<u8> {
@@ -120,5 +139,20 @@ mod tests {
         let result = decoder.crack("032e272724", &get_athena_checker());
         assert_eq!(result.unencrypted_text.unwrap()[0], "Hello");
         assert_eq!(result.key.unwrap(), "0x4b");
+    }
+
+    #[test]
+    fn preserves_non_utf8_output_as_hex_carrier() {
+        let candidates = xor_single_candidates(&[0xff]);
+        assert!(candidates
+            .iter()
+            .any(|(candidate, key, _)| candidate == "ff" && key == "0x00"));
+    }
+
+    #[test]
+    fn empty_input_returns_no_candidates() {
+        let decoder = Decoder::<XorSingleDecoder>::new();
+        let result = decoder.crack("", &get_athena_checker());
+        assert!(result.unencrypted_text.is_none());
     }
 }
