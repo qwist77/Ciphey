@@ -90,16 +90,16 @@ fn decode_uuencode(text: &str) -> Option<String> {
 fn decode_uu_line(line: &str) -> Option<Vec<u8>> {
     let bytes = line.as_bytes();
     let (&length_char, encoded) = bytes.split_first()?;
-    let expected_len = uu_value(length_char) as usize;
+    let expected_len = uu_value(length_char)? as usize;
     let mut decoded = Vec::new();
 
     for chunk in encoded.chunks(4) {
         let mut padded = [b'`'; 4];
         padded[..chunk.len()].copy_from_slice(chunk);
-        let a = uu_value(padded[0]);
-        let b = uu_value(padded[1]);
-        let c = uu_value(padded[2]);
-        let d = uu_value(padded[3]);
+        let a = uu_value(padded[0])?;
+        let b = uu_value(padded[1])?;
+        let c = uu_value(padded[2])?;
+        let d = uu_value(padded[3])?;
         decoded.push((a << 2) | (b >> 4));
         decoded.push((b << 4) | (c >> 2));
         decoded.push((c << 6) | d);
@@ -107,17 +107,35 @@ fn decode_uu_line(line: &str) -> Option<Vec<u8>> {
     if decoded.len() < expected_len {
         return None;
     }
+    if decoded[expected_len..].iter().any(|byte| *byte != 0) {
+        return None;
+    }
     decoded.truncate(expected_len);
     Some(decoded)
 }
 
-fn uu_value(byte: u8) -> u8 {
-    byte.wrapping_sub(32) & 0x3f
+fn uu_value(byte: u8) -> Option<u8> {
+    match byte {
+        b' '..=b'_' => Some(byte - 32),
+        b'`' => Some(0),
+        _ => None,
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::checkers::{
+        athena::Athena,
+        checker_type::{Check, Checker},
+        CheckerTypes,
+    };
+    use crate::decoders::interface::Crack;
+
+    fn get_athena_checker() -> CheckerTypes {
+        let athena_checker = Checker::<Athena>::new();
+        CheckerTypes::CheckAthena(athena_checker)
+    }
 
     #[test]
     fn decodes_raw_uuencoded_line() {
@@ -136,5 +154,23 @@ mod tests {
     #[test]
     fn rejects_invalid_short_chunk() {
         assert_eq!(decode_uuencode("+abc"), None);
+    }
+
+    #[test]
+    fn rejects_illegal_uuencode_character() {
+        assert_eq!(decode_uuencode("+aaaa"), None);
+    }
+
+    #[test]
+    fn crack_decodes_legacy_python_wrapper_vector() {
+        let decoder = Decoder::<UuencodeDecoder>::new();
+        let result = decoder.crack(
+            "begin 644 /dev/stdout\nM2&5L;&\\@;7D@;F%M92!I<R!B964@86YD($D@;&EK92!D;V<@86YD(&%P<&QE\n)(&%N9\"!T<F5E\n`\nend\n",
+            &get_athena_checker(),
+        );
+        assert_eq!(
+            result.unencrypted_text.unwrap()[0],
+            "Hello my name is bee and I like dog and apple and tree"
+        );
     }
 }

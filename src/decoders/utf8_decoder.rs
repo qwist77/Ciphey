@@ -1,6 +1,7 @@
 //! Decode UTF-8 bytes.
 
 use crate::checkers::CheckerTypes;
+use crate::decoders::byte_input::parse_textual_bytes;
 use crate::decoders::interface::check_string_success;
 
 use super::crack_results::CrackResult;
@@ -26,8 +27,8 @@ impl Crack for Decoder<Utf8Decoder> {
     fn crack(&self, text: &str, checker: &CheckerTypes) -> CrackResult {
         trace!("Trying UTF-8 with text {:?}", text);
         let mut results = CrackResult::new(self, text.to_string());
-        let Some(bytes) = parse_hex_escape_bytes(text) else {
-            debug!("UTF-8 decoder skipped string input without escaped bytes");
+        let Some(bytes) = parse_textual_bytes(text) else {
+            debug!("UTF-8 decoder skipped string input without a byte carrier");
             return results;
         };
         let Some(decoded_text) = decode_utf8_bytes(&bytes) else {
@@ -74,27 +75,20 @@ fn decode_utf8_bytes(bytes: &[u8]) -> Option<String> {
     String::from_utf8(bytes.to_vec()).ok()
 }
 
-fn parse_hex_escape_bytes(text: &str) -> Option<Vec<u8>> {
-    let mut bytes = Vec::new();
-    let mut rest = text;
-    while let Some(stripped) = rest.strip_prefix("\\x") {
-        if stripped.len() < 2 {
-            return None;
-        }
-        let (hex, remaining) = stripped.split_at(2);
-        bytes.push(u8::from_str_radix(hex, 16).ok()?);
-        rest = remaining;
-    }
-    if rest.is_empty() && !bytes.is_empty() {
-        Some(bytes)
-    } else {
-        None
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::checkers::{
+        athena::Athena,
+        checker_type::{Check, Checker},
+        CheckerTypes,
+    };
+    use crate::decoders::interface::Crack;
+
+    fn get_athena_checker() -> CheckerTypes {
+        let athena_checker = Checker::<Athena>::new();
+        CheckerTypes::CheckAthena(athena_checker)
+    }
 
     #[test]
     fn decodes_utf8_bytes() {
@@ -109,8 +103,15 @@ mod tests {
     #[test]
     fn parses_hex_escape_input_for_string_pipeline() {
         assert_eq!(
-            parse_hex_escape_bytes("\\x48\\x65\\x6c\\x6c\\x6f"),
+            parse_textual_bytes("\\x48\\x65\\x6c\\x6c\\x6f"),
             Some(b"Hello".to_vec())
         );
+    }
+
+    #[test]
+    fn crack_decodes_hex_byte_carrier() {
+        let decoder = Decoder::<Utf8Decoder>::new();
+        let result = decoder.crack("48656c6c6f", &get_athena_checker());
+        assert_eq!(result.unencrypted_text.unwrap()[0], "Hello");
     }
 }

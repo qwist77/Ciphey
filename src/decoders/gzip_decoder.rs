@@ -1,6 +1,7 @@
 //! Decode gzip-compressed bytes.
 
 use crate::checkers::CheckerTypes;
+use crate::decoders::byte_input::parse_textual_bytes;
 use crate::decoders::interface::check_string_success;
 
 use super::crack_results::CrackResult;
@@ -29,7 +30,7 @@ impl Crack for Decoder<GzipDecoder> {
     fn crack(&self, text: &str, checker: &CheckerTypes) -> CrackResult {
         trace!("Trying gzip with text {:?}", text);
         let mut results = CrackResult::new(self, text.to_string());
-        let input = parse_hex_bytes(text).unwrap_or_else(|| text.as_bytes().to_vec());
+        let input = parse_textual_bytes(text).unwrap_or_else(|| text.as_bytes().to_vec());
         let Some(decoded_text) = decode_gzip_bytes(&input) else {
             debug!("Gzip decode failed");
             return results;
@@ -77,33 +78,39 @@ fn decode_gzip_bytes(bytes: &[u8]) -> Option<String> {
     Some(output)
 }
 
-fn parse_hex_bytes(text: &str) -> Option<Vec<u8>> {
-    let cleaned: String = text.chars().filter(|ch| !ch.is_whitespace()).collect();
-    if cleaned.is_empty()
-        || cleaned.len() % 2 != 0
-        || !cleaned.chars().all(|ch| ch.is_ascii_hexdigit())
-    {
-        return None;
-    }
-    cleaned
-        .as_bytes()
-        .chunks(2)
-        .map(|pair| {
-            let hex = std::str::from_utf8(pair).ok()?;
-            u8::from_str_radix(hex, 16).ok()
-        })
-        .collect()
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::checkers::{
+        athena::Athena,
+        checker_type::{Check, Checker},
+        CheckerTypes,
+    };
+    use crate::decoders::interface::Crack;
+
+    fn get_athena_checker() -> CheckerTypes {
+        let athena_checker = Checker::<Athena>::new();
+        CheckerTypes::CheckAthena(athena_checker)
+    }
 
     #[test]
     fn decodes_gzip_hex_vector() {
         let gzip_hex = "1f8b08000000000002ffcb48cdc9c95728cf2fca49010085114a0d0b000000";
-        let bytes = parse_hex_bytes(gzip_hex).expect("hex should parse");
+        let bytes = parse_textual_bytes(gzip_hex).expect("hex should parse");
         assert_eq!(decode_gzip_bytes(&bytes), Some("hello world".to_string()));
+    }
+
+    #[test]
+    fn crack_decodes_legacy_python_base64_gzip_vector() {
+        let decoder = Decoder::<GzipDecoder>::new();
+        let result = decoder.crack(
+            "H4sIAAzul18A/yXJzQmAMBSEwVa+ckwZT7LIw80P6sXuA3ocZpM9aC89msibXSJ6peA8RR3Hx5jTfzyXtAAbQvCyNgAAAA==",
+            &get_athena_checker(),
+        );
+        assert_eq!(
+            result.unencrypted_text.unwrap()[0],
+            "Hello my name is bee and I like dog and apple and tree"
+        );
     }
 
     #[test]

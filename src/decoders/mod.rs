@@ -27,6 +27,8 @@ pub mod base85_decoder;
 pub mod baudot_decoder;
 /// The binary_decoder module decodes binary
 pub mod binary_decoder;
+/// The byte_input module parses textual byte carriers for byte-oriented decoders
+pub mod byte_input;
 /// The hexadecimal_decoder module decodes hexadecimal
 pub mod hexadecimal_decoder;
 
