@@ -170,4 +170,12 @@ mod tests {
         let result = decoder.crack("", &get_athena_checker());
         assert!(result.unencrypted_text.is_none());
     }
+
+    #[test]
+    fn decrypt_preserves_case_punctuation_and_digits() {
+        assert_eq!(
+            decrypt_affine("Izzisg iz Xiov, 2026!", 21, 8),
+            "Attack at Dawn, 2026!"
+        );
+    }
 }

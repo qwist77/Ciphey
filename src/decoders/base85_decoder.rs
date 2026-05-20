@@ -147,4 +147,9 @@ mod tests {
     fn rejects_invalid_single_digit_tail() {
         assert_eq!(decode_base85("X"), None);
     }
+
+    #[test]
+    fn decodes_standard_man_vector() {
+        assert_eq!(decode_base85("O<`^z"), Some("Man ".to_string()));
+    }
 }

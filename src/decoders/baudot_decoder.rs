@@ -176,4 +176,12 @@ mod tests {
     fn rejects_non_bit_token() {
         assert_eq!(decode_baudot("10100 hello"), None);
     }
+
+    #[test]
+    fn decodes_figures_digits_and_punctuation_phrase() {
+        assert_eq!(
+            decode_baudot("10100 00110 00100 11011 10011 10110 10011 10101 01101"),
+            Some("HI 2026!".to_string())
+        );
+    }
 }

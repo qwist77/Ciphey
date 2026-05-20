@@ -121,4 +121,12 @@ mod tests {
         let result = decoder.crack("aGVsbG8gd29ybGQK", &get_athena_checker());
         assert!(result.unencrypted_text.is_none());
     }
+
+    #[test]
+    fn decodes_rfc3629_four_byte_sequence() {
+        assert_eq!(
+            decode_utf8_bytes(&[0xf0, 0x90, 0x8d, 0x88]),
+            Some("𐍈".to_string())
+        );
+    }
 }

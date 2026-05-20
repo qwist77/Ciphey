@@ -141,4 +141,12 @@ mod tests {
         let result = decoder.crack("", &get_athena_checker());
         assert!(result.unencrypted_text.is_none());
     }
+
+    #[test]
+    fn decodes_standard_help_me_phrase() {
+        assert_eq!(
+            decode_tap_code("2,3 1,5 3,1 3,5  3,2 1,5"),
+            Some("HELP ME".to_string())
+        );
+    }
 }

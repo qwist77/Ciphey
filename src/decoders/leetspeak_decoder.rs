@@ -101,4 +101,9 @@ mod tests {
     fn decodes_underscore_as_space() {
         assert_eq!(decode_leetspeak("H3ll0_W0rld"), "HEllO WOrld");
     }
+
+    #[test]
+    fn decodes_multichar_leetspeak_tokens() {
+        assert_eq!(decode_leetspeak("P4|>3R_\\/\\/1N5"), "PAPER WINS");
+    }
 }

@@ -186,4 +186,12 @@ mod tests {
     fn rejects_non_ab_input() {
         assert_eq!(decode_baconian("AACAA"), None);
     }
+
+    #[test]
+    fn decodes_lowercase_with_separators_and_variant_divergence() {
+        assert_eq!(
+            decode_baconian("aaaab-aaaaa:aaaba;abbab abbaa"),
+            Some(vec!["BACON".to_string(), "BACNM".to_string()])
+        );
+    }
 }

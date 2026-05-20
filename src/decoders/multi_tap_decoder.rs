@@ -123,4 +123,9 @@ mod tests {
     fn empty_input_matches_python_helper() {
         assert_eq!(decode_multi_tap(""), Some(String::new()));
     }
+
+    #[test]
+    fn decodes_four_press_keys_7_and_9() {
+        assert_eq!(decode_multi_tap("7777 9999"), Some("SZ".to_string()));
+    }
 }

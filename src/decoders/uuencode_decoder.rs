@@ -186,4 +186,12 @@ mod tests {
             "Hello my name is bee and I like dog and apple and tree"
         );
     }
+
+    #[test]
+    fn decodes_standard_cat_vector_with_zero_length_terminator() {
+        assert_eq!(
+            decode_uuencode("begin 644 cat.txt\n#0V%T\n`\nend"),
+            Some("Cat".to_string())
+        );
+    }
 }

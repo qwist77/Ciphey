@@ -118,4 +118,12 @@ mod tests {
     fn rejects_consecutive_delimiters_like_python() {
         assert_eq!(decode_decimal("72,,101"), None);
     }
+
+    #[test]
+    fn decodes_mixed_decimal_delimiters() {
+        assert_eq!(
+            decode_decimal("65,83;67:73-73\n33"),
+            Some("ASCII!".to_string())
+        );
+    }
 }

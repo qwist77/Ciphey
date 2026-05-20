@@ -124,4 +124,9 @@ mod tests {
     fn rejects_invalid_character() {
         assert_eq!(decode_base62("not base62!"), None);
     }
+
+    #[test]
+    fn preserves_multiple_leading_nulls_before_payload() {
+        assert_eq!(decode_base62("024oz"), Some("\0\0Hi".to_string()));
+    }
 }

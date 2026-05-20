@@ -160,4 +160,12 @@ mod tests {
     fn rejects_non_ascii_without_panicking() {
         assert_eq!(decode_base69("😀😀😀😀😀😀😀😀"), None);
     }
+
+    #[test]
+    fn decodes_full_chunk_with_ignored_whitespace() {
+        assert_eq!(
+            decode_base69("gALBDB0AiA VAMACB"),
+            Some("ABCDEFG".to_string())
+        );
+    }
 }

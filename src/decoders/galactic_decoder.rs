@@ -145,4 +145,12 @@ mod tests {
     fn ignores_only_common_ascii_symbols_for_detection() {
         assert_eq!(decode_galactic("!|"), None);
     }
+
+    #[test]
+    fn decodes_full_galactic_alphabet() {
+        assert_eq!(
+            decode_galactic("\u{1511}\u{0296}\u{14f5}\u{21b8}\u{14b7}\u{2393}\u{22a3}\u{2351}\u{254e}\u{22ee}\u{a58c}\u{a58e}\u{14b2}\u{30ea}\u{1d679}!\u{1451}\u{2237}\u{14ed}\u{2138}\u{268d}\u{234a}\u{2234}\u{0307}|\u{2a05}"),
+            Some("abcdefghijklmnopqrstuvwxyz".to_string())
+        );
+    }
 }

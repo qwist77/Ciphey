@@ -126,4 +126,9 @@ mod tests {
         assert_eq!(decode_octal_bytes("200"), Some(vec![0x80]));
         assert_eq!(decode_octal("200"), None);
     }
+
+    #[test]
+    fn decodes_variable_width_space_separated_octal_values() {
+        assert_eq!(decode_octal("41 40 101 12"), Some("! A\n".to_string()));
+    }
 }

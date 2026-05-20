@@ -137,4 +137,11 @@ mod tests {
 
         assert_eq!(decode_gzip_bytes(&compressed), None);
     }
+
+    #[test]
+    fn decodes_gzip_with_original_filename_header() {
+        let gzip_hex = "1f8b08080000000002ff68656c6c6f2e74787400cb48cdc9c9e7020020303a3606000000";
+        let bytes = parse_textual_bytes(gzip_hex).expect("hex should parse");
+        assert_eq!(decode_gzip_bytes(&bytes), Some("hello\n".to_string()));
+    }
 }

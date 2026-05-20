@@ -123,4 +123,12 @@ mod tests {
     fn rejects_incomplete_chunk() {
         assert_eq!(decode_dtmf("163369"), None);
     }
+
+    #[test]
+    fn decodes_full_dtmf_keypad_matrix() {
+        assert_eq!(
+            decode_dtmf("697/1209 697/1336 697/1477 697/1633 770/1209 770/1336 770/1477 770/1633 852/1209 852/1336 852/1477 852/1633 941/1209 941/1336 941/1477 941/1633"),
+            Some("123A456B789C*0#D".to_string())
+        );
+    }
 }

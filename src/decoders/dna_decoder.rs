@@ -128,4 +128,12 @@ mod tests {
     fn rejects_incomplete_trailing_codon() {
         assert_eq!(decode_dna("GCTA"), None);
     }
+
+    #[test]
+    fn decodes_standard_codon_table_example() {
+        assert_eq!(
+            decode_dna("ATGGCCATTGTAATGGGCCGCTGAAAGGGTGCCCGATAG"),
+            Some("MAIVMGR.KGAR.".to_string())
+        );
+    }
 }

@@ -208,4 +208,10 @@ mod tests {
             "hello my name is bee and I like dog and apple and tree"
         );
     }
+
+    #[test]
+    fn removes_explicit_delimiter_symbol() {
+        let candidates = xandy_candidates("xDDxDxxx-xDDxxDxD").expect("xandy candidates");
+        assert!(candidates.iter().any(|(candidate, _, _)| candidate == "he"));
+    }
 }

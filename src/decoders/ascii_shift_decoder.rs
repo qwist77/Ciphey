@@ -135,4 +135,9 @@ mod tests {
         let result = decoder.crack("", &get_athena_checker());
         assert!(result.unencrypted_text.is_none());
     }
+
+    #[test]
+    fn shift_wraps_at_7_bit_boundary() {
+        assert_eq!(ascii_shift("~\x7f", 1), "\x7f\0");
+    }
 }

@@ -168,4 +168,15 @@ mod tests {
         let result = decoder.crack("", &get_athena_checker());
         assert!(result.unencrypted_text.is_none());
     }
+
+    #[test]
+    fn finds_cryptopals_single_byte_xor_vector() {
+        let input = "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736";
+        let bytes =
+            crate::decoders::byte_input::parse_textual_bytes(input).expect("hex should parse");
+        let candidates = xor_single_candidates(&bytes);
+        assert!(candidates.iter().any(|(candidate, key, _)| {
+            candidate == "Cooking MC's like a pound of bacon" && key == "0x58"
+        }));
+    }
 }

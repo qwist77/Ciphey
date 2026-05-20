@@ -97,4 +97,9 @@ mod tests {
     fn rejects_adobe_markers_like_python_default() {
         assert_eq!(decode_ascii85("<~BOu!rD]j7BEbo7~>"), None);
     }
+
+    #[test]
+    fn decodes_standard_man_vector() {
+        assert_eq!(decode_ascii85("9jqo^"), Some("Man ".to_string()));
+    }
 }
