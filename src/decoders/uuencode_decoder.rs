@@ -104,9 +104,11 @@ fn decode_uu_line(line: &str) -> Option<Vec<u8>> {
         decoded.push((b << 4) | (c >> 2));
         decoded.push((c << 6) | d);
     }
-    decoded.resize(expected_len, 0);
-    if decoded[expected_len..].iter().any(|byte| *byte != 0) {
+    if decoded.len() > expected_len && decoded[expected_len..].iter().any(|byte| *byte != 0) {
         return None;
+    }
+    if decoded.len() < expected_len {
+        decoded.resize(expected_len, 0);
     }
     decoded.truncate(expected_len);
     Some(decoded)
@@ -160,6 +162,11 @@ mod tests {
             decode_uu_line("+").expect("line should decode"),
             vec![0; 11]
         );
+    }
+
+    #[test]
+    fn rejects_nonzero_trailing_garbage_like_python() {
+        assert_eq!(decode_uuencode(" !!!!"), None);
     }
 
     #[test]
