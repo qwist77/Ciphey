@@ -8,8 +8,9 @@ use super::crack_results::CrackResult;
 use super::interface::{Crack, Decoder};
 
 use log::{info, trace};
-use num::{BigUint, Zero};
 use std::collections::HashSet;
+
+const MAX_XANDY_BITS: usize = 8192;
 
 /// X-and-Y substitution cracker.
 pub struct XandyDecoder;
@@ -139,11 +140,35 @@ fn binary_to_utf8(binary: &str) -> Option<String> {
     if binary.is_empty() || !binary.chars().all(|ch| matches!(ch, '0' | '1')) {
         return None;
     }
-    let number = BigUint::parse_bytes(binary.as_bytes(), 2)?;
-    if number.is_zero() {
+    let binary = binary.trim_start_matches('0');
+    if binary.is_empty() {
         return Some(String::new());
     }
-    String::from_utf8(number.to_bytes_be()).ok()
+    if binary.len() > MAX_XANDY_BITS {
+        return None;
+    }
+
+    let first_byte_len = binary.len() % 8;
+    let mut bytes = Vec::with_capacity(binary.len().div_ceil(8));
+    let mut index = 0;
+    if first_byte_len != 0 {
+        bytes.push(parse_binary_byte(&binary[..first_byte_len])?);
+        index = first_byte_len;
+    }
+    while index < binary.len() {
+        bytes.push(parse_binary_byte(&binary[index..index + 8])?);
+        index += 8;
+    }
+
+    String::from_utf8(bytes).ok()
+}
+
+fn parse_binary_byte(bits: &str) -> Option<u8> {
+    bits.bytes().try_fold(0u8, |byte, bit| match bit {
+        b'0' => Some(byte << 1),
+        b'1' => Some((byte << 1) | 1),
+        _ => None,
+    })
 }
 
 #[cfg(test)]
@@ -164,6 +189,11 @@ mod tests {
     fn converts_binary_symbols_to_text() {
         let candidates = xandy_candidates("xDDxDxxx xDDxxDxD").expect("candidate");
         assert!(candidates.iter().any(|(candidate, _, _)| candidate == "he"));
+    }
+
+    #[test]
+    fn rejects_overlong_binary_input() {
+        assert_eq!(binary_to_utf8(&"1".repeat(MAX_XANDY_BITS + 1)), None);
     }
 
     #[test]

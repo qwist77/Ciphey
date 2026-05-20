@@ -69,21 +69,22 @@ impl Crack for Decoder<DecimalDecoder> {
 fn decode_decimal(text: &str) -> Option<String> {
     let digits_only: String = text
         .chars()
-        .filter(|ch| !matches!(ch, ',' | ';' | ':' | '-' | '\n') && !ch.is_whitespace())
+        .filter(|ch| !is_decimal_delimiter(*ch))
         .collect();
     if digits_only.is_empty() || !digits_only.chars().all(|ch| ch.is_ascii_digit()) {
         return None;
     }
 
-    let mut decoded = String::new();
-    for token in text.split(|ch| matches!(ch, ' ' | ',' | ';' | ':' | '-' | '\n')) {
-        let value: u32 = token.parse().ok()?;
-        if value > 255 {
-            return None;
-        }
-        decoded.push(char::from_u32(value)?);
+    let mut decoded = Vec::new();
+    for token in text.split(is_decimal_delimiter) {
+        let value: u8 = token.parse().ok()?;
+        decoded.push(value);
     }
-    Some(decoded)
+    String::from_utf8(decoded).ok()
+}
+
+fn is_decimal_delimiter(ch: char) -> bool {
+    matches!(ch, ',' | ';' | ':' | '-') || ch.is_whitespace()
 }
 
 #[cfg(test)]
@@ -96,6 +97,16 @@ mod tests {
             decode_decimal("72 101 108 108 111"),
             Some("Hello".to_string())
         );
+    }
+
+    #[test]
+    fn decodes_multibyte_utf8_decimal_values() {
+        assert_eq!(decode_decimal("195 169"), Some("é".to_string()));
+    }
+
+    #[test]
+    fn decodes_decimal_values_with_tabs_and_carriage_returns() {
+        assert_eq!(decode_decimal("72\t101\r108"), Some("Hel".to_string()));
     }
 
     #[test]

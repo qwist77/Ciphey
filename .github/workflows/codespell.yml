@@ -35,4 +35,4 @@ jobs:
 
       - name: Check spelling in changed files
         if: steps.changed-files.outputs.has_files == 'true'
-        run: xargs -0 codespell --ignore-words-list cant,cunt,gage,hart,nam,nd,rouge,te,wit,whats < changed-files.txt
+        run: xargs -0 codespell --skip='src/decoders/data/*.json' < changed-files.txt

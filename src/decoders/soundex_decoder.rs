@@ -104,15 +104,11 @@ fn soundex_candidates(text: &str) -> Option<Vec<String>> {
     let mut word_lists = Vec::new();
     for chunk in cleaned.as_bytes().chunks(4) {
         let code = std::str::from_utf8(chunk).ok()?;
-        if let Some(words) = SOUNDEX_DICT.get(code) {
-            let mut ranked_words = words.clone();
-            ranked_words.sort_by_key(|word| word_rank(word));
-            ranked_words.truncate(MAX_SOUNDEX_WORDS_PER_CODE);
-            word_lists.push(ranked_words);
-        }
-    }
-    if word_lists.is_empty() {
-        return Some(Vec::new());
+        let words = SOUNDEX_DICT.get(code)?;
+        let mut ranked_words = words.clone();
+        ranked_words.sort_by_key(|word| word_rank(word));
+        ranked_words.truncate(MAX_SOUNDEX_WORDS_PER_CODE);
+        word_lists.push(ranked_words);
     }
 
     let mut sentences = Vec::new();
@@ -184,6 +180,11 @@ mod tests {
     #[test]
     fn rejects_invalid_soundex_chars() {
         assert_eq!(soundex_candidates("H236!"), None);
+    }
+
+    #[test]
+    fn rejects_soundex_sequence_with_unknown_chunk() {
+        assert_eq!(soundex_candidates("H236 Z999 I500"), None);
     }
 
     #[test]

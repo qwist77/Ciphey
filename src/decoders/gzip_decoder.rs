@@ -11,6 +11,8 @@ use flate2::read::GzDecoder;
 use log::{debug, info, trace};
 use std::io::Read;
 
+const MAX_GZIP_DECOMPRESSED_BYTES: u64 = 1024 * 1024;
+
 /// Gzip decoder.
 pub struct GzipDecoder;
 
@@ -72,10 +74,14 @@ impl Crack for Decoder<GzipDecoder> {
 }
 
 fn decode_gzip_bytes(bytes: &[u8]) -> Option<String> {
-    let mut decoder = GzDecoder::new(bytes);
-    let mut output = String::new();
-    decoder.read_to_string(&mut output).ok()?;
-    Some(output)
+    let decoder = GzDecoder::new(bytes);
+    let mut limited = decoder.take(MAX_GZIP_DECOMPRESSED_BYTES + 1);
+    let mut output = Vec::new();
+    limited.read_to_end(&mut output).ok()?;
+    if output.len() as u64 > MAX_GZIP_DECOMPRESSED_BYTES {
+        return None;
+    }
+    String::from_utf8(output).ok()
 }
 
 #[cfg(test)]
@@ -87,6 +93,7 @@ mod tests {
         CheckerTypes,
     };
     use crate::decoders::interface::Crack;
+    use std::io::Write;
 
     fn get_athena_checker() -> CheckerTypes {
         let athena_checker = Checker::<Athena>::new();
@@ -116,5 +123,18 @@ mod tests {
     #[test]
     fn rejects_invalid_gzip() {
         assert_eq!(decode_gzip_bytes(b"not gzip"), None);
+    }
+
+    #[test]
+    fn rejects_gzip_output_over_limit() {
+        use flate2::{write::GzEncoder, Compression};
+
+        let mut encoder = GzEncoder::new(Vec::new(), Compression::default());
+        encoder
+            .write_all(&vec![b'a'; MAX_GZIP_DECOMPRESSED_BYTES as usize + 1])
+            .expect("write test gzip payload");
+        let compressed = encoder.finish().expect("finish test gzip payload");
+
+        assert_eq!(decode_gzip_bytes(&compressed), None);
     }
 }
