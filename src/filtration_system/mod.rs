@@ -5,10 +5,14 @@ use std::sync::mpsc::channel;
 
 use crate::checkers::CheckerTypes;
 use crate::cli_pretty_printing;
+use crate::decoders::ascii85_decoder::Ascii85Decoder;
 use crate::decoders::atbash_decoder::AtbashDecoder;
 use crate::decoders::base32_decoder::Base32Decoder;
 use crate::decoders::base58_bitcoin_decoder::Base58BitcoinDecoder;
 use crate::decoders::base58_monero_decoder::Base58MoneroDecoder;
+use crate::decoders::base62_decoder::Base62Decoder;
+use crate::decoders::base69_decoder::Base69Decoder;
+use crate::decoders::base85_decoder::Base85Decoder;
 use crate::decoders::binary_decoder::BinaryDecoder;
 use crate::decoders::hexadecimal_decoder::HexadecimalDecoder;
 use crate::DecoderResult;
@@ -242,6 +246,10 @@ pub fn filter_and_get_decoders(_text_struct: &DecoderResult) -> Decoders {
     let base65536 = Decoder::<Base65536Decoder>::new();
     let citrix_ctx1 = Decoder::<CitrixCTX1Decoder>::new();
     let url = Decoder::<URLDecoder>::new();
+    let ascii85 = Decoder::<Ascii85Decoder>::new();
+    let base62 = Decoder::<Base62Decoder>::new();
+    let base69 = Decoder::<Base69Decoder>::new();
+    let base85 = Decoder::<Base85Decoder>::new();
     let base32 = Decoder::<Base32Decoder>::new();
     let reversedecoder = Decoder::<ReverseDecoder>::new();
     let morsecodedecoder = Decoder::<MorseCodeDecoder>::new();
@@ -267,6 +275,10 @@ pub fn filter_and_get_decoders(_text_struct: &DecoderResult) -> Decoders {
             Box::new(base58_flickr),
             Box::new(base91),
             Box::new(base65536),
+            Box::new(base62),
+            Box::new(base69),
+            Box::new(base85),
+            Box::new(ascii85),
             Box::new(binary),
             Box::new(hexadecimal),
             Box::new(base32),

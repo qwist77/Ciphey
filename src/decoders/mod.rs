@@ -7,6 +7,8 @@
 
 /// The a1z26_decoder module decodes A1Z26
 pub mod a1z26_decoder;
+/// The ascii85_decoder module decodes ASCII85
+pub mod ascii85_decoder;
 /// The atbash_decoder module decodes atbash
 pub mod atbash_decoder;
 /// The base32_decoder module decodes base32
@@ -15,6 +17,12 @@ pub mod base32_decoder;
 pub mod base58_bitcoin_decoder;
 /// The base58_monero_decoder module decodes base58 monero
 pub mod base58_monero_decoder;
+/// The base62_decoder module decodes base62
+pub mod base62_decoder;
+/// The base69_decoder module decodes base69
+pub mod base69_decoder;
+/// The base85_decoder module decodes base85
+pub mod base85_decoder;
 /// The binary_decoder module decodes binary
 pub mod binary_decoder;
 /// The hexadecimal_decoder module decodes hexadecimal
@@ -77,12 +85,16 @@ pub mod brainfuck_interpreter;
 /// The vigenere_decoder module decodes Vigenère cipher text
 pub mod vigenere_decoder;
 
+use ascii85_decoder::Ascii85Decoder;
 use atbash_decoder::AtbashDecoder;
 use base32_decoder::Base32Decoder;
 use base58_bitcoin_decoder::Base58BitcoinDecoder;
 use base58_flickr_decoder::Base58FlickrDecoder;
 use base58_monero_decoder::Base58MoneroDecoder;
 use base58_ripple_decoder::Base58RippleDecoder;
+use base62_decoder::Base62Decoder;
+use base69_decoder::Base69Decoder;
+use base85_decoder::Base85Decoder;
 use binary_decoder::BinaryDecoder;
 use hexadecimal_decoder::HexadecimalDecoder;
 use interface::{Crack, Decoder};
@@ -117,8 +129,16 @@ pub enum DecoderType {
     A1z26Decoder(a1z26_decoder::A1Z26Decoder),
     /// atbash decoder
     AtbashDecoder(atbash_decoder::AtbashDecoder),
+    /// ascii85 decoder
+    Ascii85Decoder(ascii85_decoder::Ascii85Decoder),
     /// base32 decoder
     Base32Decoder(base32_decoder::Base32Decoder),
+    /// base62 decoder
+    Base62Decoder(base62_decoder::Base62Decoder),
+    /// base69 decoder
+    Base69Decoder(base69_decoder::Base69Decoder),
+    /// base85 decoder
+    Base85Decoder(base85_decoder::Base85Decoder),
     /// base58 bitcoin decoder
     Base58BitcoinDecoder(base58_bitcoin_decoder::Base58BitcoinDecoder),
     /// base58 monero decoder
@@ -227,6 +247,10 @@ pub static DECODER_MAP: Lazy<HashMap<&str, DecoderBox>> = Lazy::new(|| {
             DecoderBox::new(Decoder::<CitrixCTX1Decoder>::new()),
         ),
         ("URL", DecoderBox::new(Decoder::<URLDecoder>::new())),
+        ("ascii85", DecoderBox::new(Decoder::<Ascii85Decoder>::new())),
+        ("Base62", DecoderBox::new(Decoder::<Base62Decoder>::new())),
+        ("Base69", DecoderBox::new(Decoder::<Base69Decoder>::new())),
+        ("Base85", DecoderBox::new(Decoder::<Base85Decoder>::new())),
         ("Base32", DecoderBox::new(Decoder::<Base32Decoder>::new())),
         ("Reverse", DecoderBox::new(Decoder::<ReverseDecoder>::new())),
         (
