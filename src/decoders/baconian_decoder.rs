@@ -137,30 +137,42 @@ fn decode_baconian(text: &str) -> Option<Vec<String>> {
         return None;
     }
 
-    let mut classic = String::new();
-    let mut unique = String::new();
+    let mut classic = Some(String::new());
+    let mut unique = Some(String::new());
     for chunk in cleaned.as_bytes().chunks(5) {
         let key = std::str::from_utf8(chunk).ok()?;
         if let Some((_, letter)) = BACONIAN_CLASSIC
             .iter()
             .find(|(candidate, _)| *candidate == key)
         {
-            classic.push(*letter);
+            if let Some(candidate) = classic.as_mut() {
+                candidate.push(*letter);
+            }
+        } else {
+            classic = None;
         }
         if let Some((_, letter)) = BACONIAN_UNIQUE
             .iter()
             .find(|(candidate, _)| *candidate == key)
         {
-            unique.push(*letter);
+            if let Some(candidate) = unique.as_mut() {
+                candidate.push(*letter);
+            }
+        } else {
+            unique = None;
         }
     }
 
     let mut candidates = Vec::new();
-    if !classic.is_empty() {
-        candidates.push(classic);
+    if let Some(classic) = classic {
+        if !classic.is_empty() {
+            candidates.push(classic);
+        }
     }
-    if !unique.is_empty() {
-        candidates.push(unique);
+    if let Some(unique) = unique {
+        if !unique.is_empty() {
+            candidates.push(unique);
+        }
     }
     Some(candidates)
 }
@@ -193,5 +205,10 @@ mod tests {
             decode_baconian("aaaab-aaaaa:aaaba;abbab abbaa"),
             Some(vec!["BACON".to_string(), "BACNM".to_string()])
         );
+    }
+
+    #[test]
+    fn does_not_return_partial_classic_candidate_for_unique_only_symbols() {
+        assert_eq!(decode_baconian("AAAAA BBAAA"), Some(vec!["AY".to_string()]));
     }
 }

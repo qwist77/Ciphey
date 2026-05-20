@@ -238,6 +238,7 @@ mod tests {
     use crate::checkers::{
         athena::Athena,
         checker_type::{Check, Checker},
+        english::EnglishChecker,
         CheckerTypes,
     };
 
@@ -302,14 +303,17 @@ mod tests {
     }
 
     #[test]
-    fn decrypts_cryptopals_repeating_key_xor_vector() {
-        let encrypted = crate::decoders::byte_input::parse_textual_bytes(
-            "0b3637272a2b2e63622c2e69692a23693a2a3c6324202d623d63343c2a26226324272765272a282b2f20430a652e2c652a3124333a653e2b2027630c692b20283165286326302e27282f",
-        )
-        .expect("hex should parse");
+    fn cracks_cryptopals_challenge_5_repeating_key_xor_vector() {
+        let input = "0b3637272a2b2e63622c2e69692a23693a2a3c6324202d623d63343c2a26226324272765272a282b2f20430a652e2c652a3124333a653e2b2027630c692b20283165286326302e27282f";
+        let checker = CheckerTypes::CheckEnglish(Checker::<EnglishChecker>::new());
+        let decoder = Decoder::<XorCryptDecoder>::new();
+        let result = decoder.crack(input, &checker);
+
+        assert!(result.success);
+        assert_eq!(result.key.as_deref(), Some("0x494345"));
         assert_eq!(
-            xor_repeating(&encrypted, b"ICE"),
-            b"Burning 'em, if you ain't quick and nimble\nI go crazy when I hear a cymbal"
+            result.unencrypted_text.as_ref().unwrap()[0],
+            "Burning 'em, if you ain't quick and nimble\nI go crazy when I hear a cymbal"
         );
     }
 }

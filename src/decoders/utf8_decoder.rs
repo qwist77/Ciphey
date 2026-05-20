@@ -129,4 +129,19 @@ mod tests {
             Some("𐍈".to_string())
         );
     }
+
+    #[test]
+    fn decodes_utf8_scalar_upper_boundary() {
+        assert_eq!(
+            decode_utf8_bytes(&[0xf4, 0x8f, 0xbf, 0xbf]),
+            Some("\u{10FFFF}".to_string())
+        );
+    }
+
+    #[test]
+    fn rejects_utf8_invalid_boundaries() {
+        assert_eq!(decode_utf8_bytes(&[0xc0, 0xaf]), None);
+        assert_eq!(decode_utf8_bytes(&[0xed, 0xa0, 0x80]), None);
+        assert_eq!(decode_utf8_bytes(&[0xf4, 0x90, 0x80, 0x80]), None);
+    }
 }

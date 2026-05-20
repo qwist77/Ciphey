@@ -121,6 +121,7 @@ mod tests {
     use crate::checkers::{
         athena::Athena,
         checker_type::{Check, Checker},
+        english::EnglishChecker,
         CheckerTypes,
     };
 
@@ -170,13 +171,17 @@ mod tests {
     }
 
     #[test]
-    fn finds_cryptopals_single_byte_xor_vector() {
+    fn cracks_cryptopals_challenge_3_single_byte_xor_vector() {
         let input = "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736";
-        let bytes =
-            crate::decoders::byte_input::parse_textual_bytes(input).expect("hex should parse");
-        let candidates = xor_single_candidates(&bytes);
-        assert!(candidates.iter().any(|(candidate, key, _)| {
-            candidate == "Cooking MC's like a pound of bacon" && key == "0x58"
-        }));
+        let checker = CheckerTypes::CheckEnglish(Checker::<EnglishChecker>::new());
+        let decoder = Decoder::<XorSingleDecoder>::new();
+        let result = decoder.crack(input, &checker);
+
+        assert!(result.success);
+        assert_eq!(result.key.as_deref(), Some("0x58"));
+        assert_eq!(
+            result.unencrypted_text.as_ref().unwrap()[0],
+            "Cooking MC's like a pound of bacon"
+        );
     }
 }

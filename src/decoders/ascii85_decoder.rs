@@ -102,4 +102,22 @@ mod tests {
     fn decodes_standard_man_vector() {
         assert_eq!(decode_ascii85("9jqo^"), Some("Man ".to_string()));
     }
+
+    #[test]
+    fn decodes_python_a85_partial_groups() {
+        assert_eq!(decode_ascii85("Ac"), Some("f".to_string()));
+        assert_eq!(decode_ascii85("Ao@"), Some("fo".to_string()));
+        assert_eq!(decode_ascii85("AoDS"), Some("foo".to_string()));
+        assert_eq!(decode_ascii85("AoDTs"), Some("foob".to_string()));
+    }
+
+    #[test]
+    fn rejects_ascii85_overflow_group() {
+        assert_eq!(decode_ascii85("uuuuu"), None);
+    }
+
+    #[test]
+    fn rejects_z_inside_ascii85_tuple() {
+        assert_eq!(decode_ascii85("Az"), None);
+    }
 }

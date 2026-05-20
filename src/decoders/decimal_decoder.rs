@@ -126,4 +126,10 @@ mod tests {
             Some("ASCII!".to_string())
         );
     }
+
+    #[test]
+    fn decodes_nul_and_rejects_non_utf8_decimal_bytes() {
+        assert_eq!(decode_decimal("0 65 0"), Some("\0A\0".to_string()));
+        assert_eq!(decode_decimal("255"), None);
+    }
 }

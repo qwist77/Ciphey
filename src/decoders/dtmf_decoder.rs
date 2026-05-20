@@ -131,4 +131,18 @@ mod tests {
             Some("123A456B789C*0#D".to_string())
         );
     }
+
+    #[test]
+    fn decodes_dtmf_frequency_pairs_in_reverse_order() {
+        assert_eq!(
+            decode_dtmf("1209/697 1336/697 1477/697 1633/697 1209/770 1336/770 1477/770 1633/770 1209/852 1336/852 1477/852 1633/852 1209/941 1336/941 1477/941 1633/941"),
+            Some("123A456B789C*0#D".to_string())
+        );
+    }
+
+    #[test]
+    fn rejects_invalid_dtmf_low_low_and_high_high_pairs() {
+        assert_eq!(decode_dtmf("697/770"), None);
+        assert_eq!(decode_dtmf("1209/1336"), None);
+    }
 }
