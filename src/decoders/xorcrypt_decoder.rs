@@ -60,7 +60,6 @@ impl Crack for Decoder<XorCryptDecoder> {
             results.unencrypted_text = Some(
                 candidates
                     .into_iter()
-                    .take(50)
                     .map(|(candidate, _, _)| candidate)
                     .collect(),
             );
@@ -236,6 +235,14 @@ mod tests {
         assert!(candidates
             .iter()
             .any(|(candidate, key, _)| candidate == "ff00" && key == "0x0000"));
+    }
+
+    #[test]
+    fn crack_preserves_non_utf8_output_as_hex_carrier() {
+        let decoder = Decoder::<XorCryptDecoder>::new();
+        let result = decoder.crack("ff00", &get_athena_checker());
+        let texts = result.unencrypted_text.unwrap();
+        assert!(texts.iter().any(|candidate| candidate == "ff00"));
     }
 
     #[test]

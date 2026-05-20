@@ -55,7 +55,6 @@ impl Crack for Decoder<XorSingleDecoder> {
         results.unencrypted_text = Some(
             candidates
                 .into_iter()
-                .take(50)
                 .map(|(candidate, _, _)| candidate)
                 .collect(),
         );
@@ -147,6 +146,18 @@ mod tests {
         assert!(candidates
             .iter()
             .any(|(candidate, key, _)| candidate == "ff" && key == "0x00"));
+    }
+
+    #[test]
+    fn crack_preserves_non_utf8_output_as_hex_carrier() {
+        let encrypted = [0x1f, 0x8b]
+            .iter()
+            .map(|byte| format!("{:02x}", byte ^ 0x42))
+            .collect::<String>();
+        let decoder = Decoder::<XorSingleDecoder>::new();
+        let result = decoder.crack(&encrypted, &get_athena_checker());
+        let texts = result.unencrypted_text.unwrap();
+        assert!(texts.iter().any(|candidate| candidate == "1f8b"));
     }
 
     #[test]
