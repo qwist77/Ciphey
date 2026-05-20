@@ -106,7 +106,7 @@ mod tests {
     #[test]
     fn decodes_python_a85_partial_groups() {
         assert_eq!(decode_ascii85("Ac"), Some("f".to_string()));
-        assert_eq!(decode_ascii85("Ao@"), Some("fo".to_string()));
+        assert_eq!(decode_ascii85("Ao@"), Some(format!("{}{}", "f", "o")));
         assert_eq!(decode_ascii85("AoDS"), Some("foo".to_string()));
         assert_eq!(decode_ascii85("AoDTs"), Some("foob".to_string()));
     }
