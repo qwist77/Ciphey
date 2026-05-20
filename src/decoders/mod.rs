@@ -122,6 +122,10 @@ pub mod brainfuck_interpreter;
 pub mod vigenere_decoder;
 /// The xandy_decoder module cracks X-and-Y binary substitution text
 pub mod xandy_decoder;
+/// The xor_single_decoder module cracks single-byte XOR text
+pub mod xor_single_decoder;
+/// The xorcrypt_decoder module cracks repeating-key XOR text
+pub mod xorcrypt_decoder;
 
 use affine_decoder::AffineDecoder;
 use ascii85_decoder::Ascii85Decoder;
@@ -168,6 +172,8 @@ use utf8_decoder::Utf8Decoder;
 use uuencode_decoder::UuencodeDecoder;
 use vigenere_decoder::VigenereDecoder;
 use xandy_decoder::XandyDecoder;
+use xor_single_decoder::XorSingleDecoder;
+use xorcrypt_decoder::XorCryptDecoder;
 use z85_decoder::Z85Decoder;
 
 use brainfuck_interpreter::BrainfuckInterpreter;
@@ -270,6 +276,10 @@ pub enum DecoderType {
     VigenereDecoder(vigenere_decoder::VigenereDecoder),
     /// X-and-Y decoder
     XandyDecoder(xandy_decoder::XandyDecoder),
+    /// single-byte XOR decoder
+    XorSingleDecoder(xor_single_decoder::XorSingleDecoder),
+    /// repeating-key XOR decoder
+    XorCryptDecoder(xorcrypt_decoder::XorCryptDecoder),
 }
 
 /// Wrapper struct to hold Decoders for DECODER_MAP
@@ -402,5 +412,13 @@ pub static DECODER_MAP: Lazy<HashMap<&str, DecoderBox>> = Lazy::new(|| {
             DecoderBox::new(Decoder::<BrainfuckInterpreter>::new()),
         ),
         ("xandy", DecoderBox::new(Decoder::<XandyDecoder>::new())),
+        (
+            "xor_single",
+            DecoderBox::new(Decoder::<XorSingleDecoder>::new()),
+        ),
+        (
+            "xorcrypt",
+            DecoderBox::new(Decoder::<XorCryptDecoder>::new()),
+        ),
     ])
 });

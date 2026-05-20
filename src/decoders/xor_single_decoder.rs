@@ -1,0 +1,124 @@
+//! Crack single-byte XOR text.
+
+use crate::checkers::CheckerTypes;
+use crate::decoders::byte_input::parse_textual_bytes;
+use crate::decoders::english_scoring::score_english;
+use crate::decoders::interface::check_string_success;
+
+use super::crack_results::CrackResult;
+use super::interface::{Crack, Decoder};
+
+use log::{info, trace};
+
+/// Single-byte XOR cracker.
+pub struct XorSingleDecoder;
+
+impl Crack for Decoder<XorSingleDecoder> {
+    fn new() -> Decoder<XorSingleDecoder> {
+        Decoder {
+            name: "xor_single",
+            description: "Single-byte XOR applies the same byte key to every byte of the input.",
+            link: "https://en.wikipedia.org/wiki/XOR_cipher",
+            tags: vec!["xor_single", "xor", "cipher", "decryption"],
+            popularity: 0.2,
+            phantom: std::marker::PhantomData,
+        }
+    }
+
+    fn crack(&self, text: &str, checker: &CheckerTypes) -> CrackResult {
+        trace!("Trying single-byte XOR with text {:?}", text);
+        let mut results = CrackResult::new(self, text.to_string());
+        let bytes = parse_textual_bytes(text).unwrap_or_else(|| text.as_bytes().to_vec());
+        let mut candidates = xor_single_candidates(&bytes);
+        candidates.sort_by(|left, right| right.2.total_cmp(&left.2));
+
+        for (candidate, key, _) in &candidates {
+            if !check_string_success(candidate, text) {
+                info!(
+                    "Single-byte XOR candidate did not modify input: {}",
+                    candidate
+                );
+                continue;
+            }
+            let checker_result = checker.check(candidate);
+            if checker_result.is_identified {
+                results.unencrypted_text = Some(vec![candidate.clone()]);
+                results.key = Some(key.clone());
+                results.update_checker(&checker_result);
+                return results;
+            }
+        }
+
+        results.unencrypted_text = Some(
+            candidates
+                .into_iter()
+                .take(50)
+                .map(|(candidate, _, _)| candidate)
+                .collect(),
+        );
+        results
+    }
+
+    fn get_tags(&self) -> &Vec<&str> {
+        &self.tags
+    }
+
+    fn get_name(&self) -> &str {
+        self.name
+    }
+
+    fn get_popularity(&self) -> f32 {
+        self.popularity
+    }
+
+    fn get_description(&self) -> &str {
+        self.description
+    }
+
+    fn get_link(&self) -> &str {
+        self.link
+    }
+}
+
+fn xor_single_candidates(bytes: &[u8]) -> Vec<(String, String, f32)> {
+    (0u8..=255)
+        .filter_map(|key| {
+            let decoded = xor_single_decrypt(bytes, key);
+            let text = String::from_utf8(decoded).ok()?;
+            let score = score_english(&text);
+            Some((text, format!("0x{key:02x}"), score))
+        })
+        .collect()
+}
+
+fn xor_single_decrypt(bytes: &[u8], key: u8) -> Vec<u8> {
+    bytes.iter().map(|byte| byte ^ key).collect()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::checkers::{
+        athena::Athena,
+        checker_type::{Check, Checker},
+        CheckerTypes,
+    };
+
+    fn get_athena_checker() -> CheckerTypes {
+        let athena_checker = Checker::<Athena>::new();
+        CheckerTypes::CheckAthena(athena_checker)
+    }
+
+    #[test]
+    fn decrypts_with_single_byte_key() {
+        assert_eq!(xor_single_decrypt(b"\x03.''$", 0x4b), b"Hello");
+    }
+
+    #[test]
+    fn crack_orders_hex_vector_first() {
+        let decoder = Decoder::<XorSingleDecoder>::new();
+        let result = decoder.crack("032e272724", &get_athena_checker());
+        assert_eq!(result.unencrypted_text.unwrap()[0], "Hello");
+        assert_eq!(result.key.unwrap(), "0x4b");
+    }
+}

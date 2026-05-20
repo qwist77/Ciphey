@@ -53,6 +53,8 @@ use crate::decoders::utf8_decoder::Utf8Decoder;
 use crate::decoders::uuencode_decoder::UuencodeDecoder;
 use crate::decoders::vigenere_decoder::VigenereDecoder;
 use crate::decoders::xandy_decoder::XandyDecoder;
+use crate::decoders::xor_single_decoder::XorSingleDecoder;
+use crate::decoders::xorcrypt_decoder::XorCryptDecoder;
 use crate::decoders::z85_decoder::Z85Decoder;
 
 use crate::decoders::brainfuck_interpreter::BrainfuckInterpreter;
@@ -295,6 +297,8 @@ pub fn filter_and_get_decoders(_text_struct: &DecoderResult) -> Decoders {
     let brailledecoder = Decoder::<BrailleDecoder>::new();
     let substitution_generic = Decoder::<SubstitutionGenericDecoder>::new();
     let xandy = Decoder::<XandyDecoder>::new();
+    let xor_single = Decoder::<XorSingleDecoder>::new();
+    let xorcrypt = Decoder::<XorCryptDecoder>::new();
 
     let brainfuck = Decoder::<BrainfuckInterpreter>::new();
 
@@ -344,6 +348,8 @@ pub fn filter_and_get_decoders(_text_struct: &DecoderResult) -> Decoders {
             Box::new(brailledecoder),
             Box::new(substitution_generic),
             Box::new(xandy),
+            Box::new(xor_single),
+            Box::new(xorcrypt),
             Box::new(brainfuck),
         ],
     }
@@ -566,6 +572,8 @@ mod tests {
             "utf8",
             "uuencode",
             "xandy",
+            "xor_single",
+            "xorcrypt",
         ];
 
         let filtered_decoders = filter_and_get_decoders(&DecoderResult::default());
