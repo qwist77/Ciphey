@@ -27,21 +27,21 @@ pub mod utils {
     use std::path::Path;
     use std::fs;
 
-    pub fn analyze_wallet_file(path: &str) -> Result<super::super::wallet_parser::ExtractedWalletData, String> {
+    pub fn analyze_wallet_file(path: &str) -> Result<super::wallet_parser::ExtractedWalletData, String> {
         let data = fs::read(path)
             .map_err(|e| format!("Failed to read wallet file: {}", e))?;
         
-        super::super::wallet_parser::WalletParser::parse_berkeleydb(&data)
+        super::wallet_parser::WalletParser::parse_berkeleydb(&data)
     }
 
     pub fn is_wallet_file(path: &str) -> bool {
         if let Ok(data) = fs::read(path) {
             matches!(
-                super::super::wallet_parser::WalletParser::identify_format(&data).format,
-                super::super::wallet_parser::WalletFormat::BerkeleyDB
-                    | super::super::wallet_parser::WalletFormat::SQLite
-                    | super::super::wallet_parser::WalletFormat::JSON
-                    | super::super::wallet_parser::WalletFormat::LevelDB
+                super::wallet_parser::WalletParser::identify_format(&data).format,
+                super::wallet_parser::WalletFormat::BerkeleyDB
+                    | super::wallet_parser::WalletFormat::SQLite
+                    | super::wallet_parser::WalletFormat::JSON
+                    | super::wallet_parser::WalletFormat::LevelDB
             )
         } else {
             false
